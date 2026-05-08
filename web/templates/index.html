@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>アパレル 新着 / リストック</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    .navbar-brand { font-weight: 700; letter-spacing: -.5px; }
+    .card { border: none; border-radius: 12px; overflow: hidden; transition: transform .15s, box-shadow .15s; }
+    .card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,.12); }
+    .card-img-top { height: 220px; object-fit: cover; background: #eee; }
+    .badge-new { background: #22c55e; }
+    .badge-restock { background: #f97316; }
+    .price { color: #dc2626; font-weight: 700; font-size: .95rem; }
+    .site-tag { font-size: .7rem; background: #6b7280; }
+    .item-name { font-size: .85rem; font-weight: 600; line-height: 1.3; }
+    .filter-bar { background: #fff; border-radius: 12px; padding: 1rem; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+    .log-table td, .log-table th { font-size: .78rem; }
+    .stat-card { background: #fff; border-radius: 12px; padding: 1rem 1.25rem; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+    .stat-num { font-size: 1.8rem; font-weight: 700; line-height: 1; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar navbar-dark bg-dark">
+  <div class="container-fluid px-4">
+    <span class="navbar-brand">SUPPLY TRACKER</span>
+    <span class="text-secondary small">{{ items|length }} 件表示中</span>
+  </div>
+</nav>
+
+<div class="container-fluid px-4 py-4">
+
+  <!-- Stats row -->
+  {% set new_count = items | selectattr("is_restock", "equalto", 0) | list | length %}
+  {% set restock_count = items | selectattr("is_restock", "equalto", 1) | list | length %}
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="stat-num text-success">{{ new_count }}</div>
+        <div class="text-muted small">新着</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="stat-num text-warning">{{ restock_count }}</div>
+        <div class="text-muted small">リストック</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="stat-num">{{ sites|length }}</div>
+        <div class="text-muted small">対象サイト数</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        {% if log %}
+        <div class="stat-num" style="font-size:1rem; padding-top:.4rem;">{{ log[0].scraped_at[:16] | replace("T"," ") }}</div>
+        {% else %}
+        <div class="stat-num" style="font-size:1rem; padding-top:.4rem;">—</div>
+        {% endif %}
+        <div class="text-muted small">最終取得</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter bar -->
+  <div class="filter-bar mb-4 d-flex flex-wrap gap-2 align-items-center">
+    <div class="btn-group btn-group-sm">
+      <a href="?status=all&site={{ current_site }}"
+         class="btn {% if current_status == 'all' %}btn-dark{% else %}btn-outline-secondary{% endif %}">すべて</a>
+      <a href="?status=new&site={{ current_site }}"
+         class="btn {% if current_status == 'new' %}btn-success{% else %}btn-outline-secondary{% endif %}">新着</a>
+      <a href="?status=restock&site={{ current_site }}"
+         class="btn {% if current_status == 'restock' %}btn-warning{% else %}btn-outline-secondary{% endif %}">リストック</a>
+    </div>
+
+    <select class="form-select form-select-sm w-auto"
+            onchange="location.href='?status={{ current_status }}&site='+this.value">
+      <option value="">全サイト</option>
+      {% for site in sites %}
+      <option value="{{ site }}" {% if site == current_site %}selected{% endif %}>{{ site }}</option>
+      {% endfor %}
+    </select>
+
+    <span class="ms-auto text-muted small d-none d-md-inline">
+      ページは5分ごとに自動更新されます
+    </span>
+  </div>
+
+  <!-- Product grid -->
+  {% if items %}
+  <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-3 mb-5">
+    {% for item in items %}
+    <div class="col">
+      <div class="card h-100">
+        {% if item.image_url %}
+        <img src="{{ item.image_url }}"
+             class="card-img-top"
+             alt="{{ item.name }}"
+             loading="lazy"
+             onerror="this.src='https://placehold.co/300x220/eeeeee/999999?text=No+Image'">
+        {% else %}
+        <div class="card-img-top d-flex align-items-center justify-content-center bg-light text-muted small">
+          No Image
+        </div>
+        {% endif %}
+
+        <div class="card-body p-2">
+          <div class="d-flex gap-1 mb-1 flex-wrap">
+            {% if item.is_restock %}
+            <span class="badge badge-restock">リストック</span>
+            {% else %}
+            <span class="badge badge-new">新着</span>
+            {% endif %}
+            <span class="badge site-tag">{{ item.site_name }}</span>
+          </div>
+          <p class="item-name mb-1">{{ item.name }}</p>
+          {% if item.price %}
+          <p class="price mb-0">{{ item.price }}</p>
+          {% endif %}
+          <p class="text-muted mb-0" style="font-size:.7rem;">
+            {{ item.last_seen[:16] | replace("T"," ") }}
+          </p>
+        </div>
+
+        <div class="card-footer p-2 bg-white border-0">
+          <a href="{{ item.item_url }}" target="_blank" rel="noopener"
+             class="btn btn-sm btn-outline-dark w-100">商品ページ</a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-center py-5 text-muted">
+    <p class="mb-1">アイテムがありません。</p>
+    <p class="small">スクレイピングを実行するか、<code>config/sites.yaml</code> を確認してください。</p>
+  </div>
+  {% endif %}
+
+  <!-- Scrape log -->
+  {% if log %}
+  <details class="mb-4">
+    <summary class="text-muted small mb-2" style="cursor:pointer;">取得ログ (直近{{ log|length }}件)</summary>
+    <div class="table-responsive">
+      <table class="table table-sm log-table bg-white rounded">
+        <thead class="table-light">
+          <tr>
+            <th>サイト</th>
+            <th>取得日時</th>
+            <th>件数</th>
+            <th>新着</th>
+            <th>リストック</th>
+            <th>エラー</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in log %}
+          <tr class="{% if row.error %}table-danger{% endif %}">
+            <td>{{ row.site_name }}</td>
+            <td>{{ row.scraped_at[:16] | replace("T"," ") }}</td>
+            <td>{{ row.items_found }}</td>
+            <td>{{ row.new_items }}</td>
+            <td>{{ row.restock_items }}</td>
+            <td>{{ row.error or "" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </details>
+  {% endif %}
+
+</div>
+
+<script>
+  // Auto-refresh every 5 minutes
+  setTimeout(() => location.reload(), 5 * 60 * 1000);
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+# アパレルECサイト設定ファイル
+# enabled: true のサイトのみスクレイピングされます。
+#
+# type: shopify  → Shopify の products.json エンドポイントを使用（推奨・安定）
+# type: generic  → CSS セレクタで任意サイトを取得
+# type: demo     → ローカルテスト用モックデータ
+
+sites:
+
+  # ── SUPPLY TOKYO ──────────────────────────────────────────────
+  - name: "SUPPLY TOKYO"
+    type: shopify
+    url: "https://supply-tokyo.com"
+    collection: "new-arrivals"   # /collections/<collection>/products.json を取得
+    limit: 50                    # 最大取得件数
+    interval_minutes: 30
+    enabled: true
+
+  # ── Shopify サイト追加例 ───────────────────────────────────────
+  # - name: "YOUR STORE"
+  #   type: shopify
+  #   url: "https://yourstore.com"
+  #   collection: "new-arrivals"
+  #   limit: 50
+  #   interval_minutes: 60
+  #   enabled: false
+
+  # ── 汎用HTMLスクレイパー追加例 ────────────────────────────────
+  # - name: "サイト名"
+  #   type: generic
+  #   url: "https://example.com/new-arrivals"
+  #   interval_minutes: 60
+  #   enabled: false
+  #   headers:
+  #     User-Agent: "Mozilla/5.0"
+  #   selectors:
+  #     container: ".product-item"    # 商品1件ごとの要素
+  #     name: ".product-name"         # 商品名
+  #     price: ".product-price"       # 価格
+  #     image: "img"                  # 画像
+  #     link: "a"                     # リンク
+
+  # ── デモ（テスト用モックデータ）─────────────────────────────
+  # - name: "デモ"
+  #   type: demo
+  #   interval_minutes: 10
+  #   seed: 42
+  #   enabled: false
