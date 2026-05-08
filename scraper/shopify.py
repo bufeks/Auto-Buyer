@@ -15,10 +15,13 @@ def scrape_shopify(site_config: Dict[str, Any]) -> List[Item]:
     """Scrape a Shopify store via its products.json endpoint."""
     site_name = site_config["name"]
     base_url = site_config["url"].rstrip("/")
-    collection = site_config.get("collection", "new-arrivals")
+    collection = site_config.get("collection")
     limit = site_config.get("limit", 50)
 
-    url = f"{base_url}/collections/{collection}/products.json?limit={limit}"
+    if collection:
+        url = f"{base_url}/collections/{collection}/products.json?limit={limit}"
+    else:
+        url = f"{base_url}/products.json?limit={limit}"
     resp = requests.get(url, headers=_HEADERS, timeout=30)
     resp.raise_for_status()
 

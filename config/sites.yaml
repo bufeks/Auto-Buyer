@@ -16,6 +16,24 @@ sites:
     interval_minutes: 30
     enabled: true
 
+  # ── MIYAGEN ───────────────────────────────────────────────────
+  - name: "MIYAGEN"
+    type: shopify
+    url: "https://miyagen.com"
+    # collection 未指定 → /products.json を使用
+    limit: 50
+    interval_minutes: 30
+    enabled: true
+
+  # ── 瓦奇岳 (KAWARAKIDAKE) ─────────────────────────────────────
+  - name: "瓦奇岳"
+    type: shopify
+    url: "https://kawarakidake.com"
+    # collection 未指定 → /products.json を使用
+    limit: 50
+    interval_minutes: 30
+    enabled: true
+
   # ── Shopify サイト追加例 ───────────────────────────────────────
   # - name: "YOUR STORE"
   #   type: shopify
