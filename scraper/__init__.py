@@ -3,10 +3,12 @@ from .models import Item
 from .shopify import scrape_shopify
 from .generic import scrape_generic
 from .demo import scrape_demo
+from .playwright_scraper import scrape_playwright
 
 _SCRAPERS = {
     "shopify": scrape_shopify,
     "generic": scrape_generic,
+    "playwright": scrape_playwright,
     "demo": scrape_demo,
 }
 

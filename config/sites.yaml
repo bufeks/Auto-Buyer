@@ -34,6 +34,37 @@ sites:
     interval_minutes: 30
     enabled: true
 
+  # ── DIGAWEL ───────────────────────────────────────────────────
+  - name: "DIGAWEL"
+    type: shopify
+    url: "https://store.digawel.com"
+    # collection 未指定 → /products.json を使用
+    limit: 50
+    interval_minutes: 30
+    enabled: true
+
+  # ── 山荘飯島 (SANSO IIJIMA) ────────────────────────────────────
+  - name: "山荘飯島"
+    type: shopify
+    url: "https://sanso-iijima.com"
+    # /collections/all/products.json は503のため /products.json を使用
+    limit: 50
+    interval_minutes: 30
+    enabled: true
+
+  # ── TMB (TakaoMountainBook) ───────────────────────────────────
+  - name: "TMB"
+    type: playwright        # BASE製サイト（JSレンダリング）
+    url: "https://tmb.official.ec/"
+    interval_minutes: 30
+    enabled: true
+    selectors:
+      container: "li[class*='itemListLI']"      # 商品カード
+      name: "p[class*='itemTitleText']"          # 商品名
+      price: "p[class*='_price_']"               # 価格
+      image: "img[class*='_image_']"             # 画像
+      link: "a[class*='_anchor_']"               # 商品リンク
+
   # ── Shopify サイト追加例 ───────────────────────────────────────
   # - name: "YOUR STORE"
   #   type: shopify
