@@ -1,7 +1,13 @@
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import List, Optional
+
+_JST = timezone(timedelta(hours=9))
+
+
+def _now_jst() -> str:
+    return datetime.now(_JST).strftime("%Y-%m-%dT%H:%M:%S")
 
 from scraper.models import Item
 
@@ -44,7 +50,7 @@ def init_db() -> None:
 
 def upsert_items(site_name: str, scraped: List[Item]) -> dict:
     """Persist scraped items, detecting new arrivals and restocks."""
-    now = datetime.now().isoformat(timespec="seconds")
+    now = _now_jst()
 
     with sqlite3.connect(DB_PATH) as conn:
         existing = {
@@ -126,7 +132,7 @@ def log_scrape(
             """,
             (
                 site_name,
-                datetime.now().isoformat(timespec="seconds"),
+                _now_jst(),
                 items_found,
                 new_items,
                 restock_items,
