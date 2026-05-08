@@ -67,7 +67,7 @@ function updateStats(items) {
   document.getElementById('stat-new').textContent     = items.filter(i => !i.is_restock && i.in_stock).length;
   document.getElementById('stat-restock').textContent = items.filter(i =>  i.is_restock).length;
   document.getElementById('stat-soldout').textContent = items.filter(i => !i.in_stock).length;
-  document.getElementById('stat-total').textContent   = items.length;
+
   document.getElementById('count-label').textContent  = items.length + ' 件表示中';
   if (LOG.length) document.getElementById('stat-last').textContent = formatDate(LOG[0].scraped_at);
 }
