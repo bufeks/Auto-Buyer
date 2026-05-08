@@ -12,8 +12,7 @@ sites:
     type: shopify
     url: "https://supply-tokyo.com"
     collection: "new-arrivals"   # /collections/<collection>/products.json を取得
-    limit: 50                    # 最大取得件数
-    interval_minutes: 30
+    interval_minutes: 10
     enabled: true
 
   # ── MIYAGEN ───────────────────────────────────────────────────
@@ -21,8 +20,7 @@ sites:
     type: shopify
     url: "https://miyagen.com"
     # collection 未指定 → /products.json を使用
-    limit: 50
-    interval_minutes: 30
+    interval_minutes: 10
     enabled: true
 
   # ── 瓦奇岳 (KAWARAKIDAKE) ─────────────────────────────────────
@@ -30,8 +28,7 @@ sites:
     type: shopify
     url: "https://kawarakidake.com"
     # collection 未指定 → /products.json を使用
-    limit: 50
-    interval_minutes: 30
+    interval_minutes: 10
     enabled: true
 
   # ── DIGAWEL ───────────────────────────────────────────────────
@@ -39,8 +36,7 @@ sites:
     type: shopify
     url: "https://store.digawel.com"
     # collection 未指定 → /products.json を使用
-    limit: 50
-    interval_minutes: 30
+    interval_minutes: 10
     enabled: true
 
   # ── 山荘飯島 (SANSO IIJIMA) ────────────────────────────────────
@@ -48,15 +44,14 @@ sites:
     type: shopify
     url: "https://sanso-iijima.com"
     # /collections/all/products.json は503のため /products.json を使用
-    limit: 50
-    interval_minutes: 30
+    interval_minutes: 10
     enabled: true
 
   # ── TMB (TakaoMountainBook) ───────────────────────────────────
   - name: "TMB"
     type: playwright        # BASE製サイト（JSレンダリング）
     url: "https://tmb.official.ec/"
-    interval_minutes: 30
+    interval_minutes: 10
     enabled: true
     selectors:
       container: "li[class*='itemListLI']"      # 商品カード
@@ -70,24 +65,21 @@ sites:
   - name: "HIKER WORKSHOP"
     type: shopify
     url: "https://hikerworkshop.jp"
-    limit: 50
-    interval_minutes: 30
+    interval_minutes: 10
     enabled: true
 
   # ── DEVELOPMENT BY NOROLL ─────────────────────────────────────
   - name: "DEVELOPMENT BY NOROLL"
     type: shopify
     url: "https://developmentbynoroll.space"
-    limit: 50
-    interval_minutes: 30
+    interval_minutes: 10
     enabled: true
 
   # ── noook ──────────────────────────────────────────────────────
   - name: "noook"
     type: shopify
     url: "https://noook.jp"
-    limit: 50
-    interval_minutes: 30
+    interval_minutes: 10
     enabled: true
 
   # ── Shopify サイト追加例 ───────────────────────────────────────

@@ -9,24 +9,36 @@ _HEADERS = {
         "Chrome/124.0.0.0 Safari/537.36"
     )
 }
+_PAGE_SIZE = 250  # Shopify の最大値
 
 
 def scrape_shopify(site_config: Dict[str, Any]) -> List[Item]:
-    """Scrape a Shopify store via its products.json endpoint."""
+    """Shopify の products.json を全ページ取得してアイテムを返す。"""
     site_name = site_config["name"]
     base_url = site_config["url"].rstrip("/")
     collection = site_config.get("collection")
-    limit = site_config.get("limit", 50)
 
     if collection:
-        url = f"{base_url}/collections/{collection}/products.json?limit={limit}"
+        base_endpoint = f"{base_url}/collections/{collection}/products.json"
     else:
-        url = f"{base_url}/products.json?limit={limit}"
-    resp = requests.get(url, headers=_HEADERS, timeout=30)
-    resp.raise_for_status()
+        base_endpoint = f"{base_url}/products.json"
+
+    all_products = []
+    page = 1
+    while True:
+        url = f"{base_endpoint}?limit={_PAGE_SIZE}&page={page}"
+        resp = requests.get(url, headers=_HEADERS, timeout=30)
+        resp.raise_for_status()
+        products = resp.json().get("products", [])
+        if not products:
+            break
+        all_products.extend(products)
+        if len(products) < _PAGE_SIZE:
+            break
+        page += 1
 
     items: List[Item] = []
-    for product in resp.json().get("products", []):
+    for product in all_products:
         variants = product.get("variants", [])
         available_variants = [v for v in variants if v.get("available")]
         in_stock = bool(available_variants)
