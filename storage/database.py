@@ -22,7 +22,8 @@ def init_db() -> None:
                 first_seen  TEXT NOT NULL,
                 last_seen   TEXT NOT NULL,
                 is_restock  INTEGER NOT NULL DEFAULT 0,
-                is_active   INTEGER NOT NULL DEFAULT 1
+                is_active   INTEGER NOT NULL DEFAULT 1,
+                in_stock    INTEGER NOT NULL DEFAULT 1
             );
 
             CREATE TABLE IF NOT EXISTS scrape_log (
@@ -35,6 +36,10 @@ def init_db() -> None:
                 error           TEXT
             );
         """)
+        # マイグレーション: 既存DBにカラムが無ければ追加
+        cols = {row[1] for row in conn.execute("PRAGMA table_info(items)")}
+        if "in_stock" not in cols:
+            conn.execute("ALTER TABLE items ADD COLUMN in_stock INTEGER NOT NULL DEFAULT 1")
 
 
 def upsert_items(site_name: str, scraped: List[Item]) -> dict:
@@ -43,9 +48,9 @@ def upsert_items(site_name: str, scraped: List[Item]) -> dict:
 
     with sqlite3.connect(DB_PATH) as conn:
         existing = {
-            row[0]: bool(row[1])
+            row[0]: {"is_active": bool(row[1]), "in_stock": bool(row[2])}
             for row in conn.execute(
-                "SELECT item_id, is_active FROM items WHERE site_name = ?",
+                "SELECT item_id, is_active, in_stock FROM items WHERE site_name = ?",
                 (site_name,),
             )
         }
@@ -54,39 +59,47 @@ def upsert_items(site_name: str, scraped: List[Item]) -> dict:
         new_count = restock_count = 0
 
         for item in scraped:
+            stock_int = 1 if item.in_stock else 0
             if item.item_id not in existing:
                 conn.execute(
                     """
                     INSERT INTO items
                         (item_id, site_name, name, price, image_url, item_url,
-                         first_seen, last_seen, is_restock, is_active)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 1)
+                         first_seen, last_seen, is_restock, is_active, in_stock)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 1, ?)
                     """,
                     (
                         item.item_id, site_name, item.name, item.price,
-                        item.image_url, item.item_url, now, now,
+                        item.image_url, item.item_url, now, now, stock_int,
                     ),
                 )
                 new_count += 1
-            elif not existing[item.item_id]:
-                # Item was inactive but has reappeared → restock
+            else:
+                prev = existing[item.item_id]
+                # 在庫復活（SOLD OUT → 在庫あり）または非アクティブからの復活 → リストック
+                is_restock = (
+                    (not prev["in_stock"] and item.in_stock) or
+                    (not prev["is_active"] and item.in_stock)
+                )
+                if is_restock:
+                    restock_count += 1
+
                 conn.execute(
                     """
                     UPDATE items
-                    SET is_restock = 1, is_active = 1, last_seen = ?,
-                        name = ?, price = ?, image_url = ?
+                    SET is_active = 1, last_seen = ?, name = ?, price = ?,
+                        image_url = ?, in_stock = ?,
+                        is_restock = CASE WHEN ? THEN 1 ELSE is_restock END
                     WHERE item_id = ?
                     """,
-                    (now, item.name, item.price, item.image_url, item.item_id),
-                )
-                restock_count += 1
-            else:
-                conn.execute(
-                    "UPDATE items SET last_seen = ?, name = ?, price = ?, image_url = ? WHERE item_id = ?",
-                    (now, item.name, item.price, item.image_url, item.item_id),
+                    (
+                        now, item.name, item.price, item.image_url,
+                        stock_int, 1 if is_restock else 0,
+                        item.item_id,
+                    ),
                 )
 
-        # Items no longer in the scrape → mark inactive
+        # サイトから消えたアイテム → 非アクティブ
         for item_id in existing:
             if item_id not in scraped_ids:
                 conn.execute(
@@ -126,7 +139,7 @@ def get_items(
     site_name: Optional[str] = None,
     status: Optional[str] = None,
 ) -> List[dict]:
-    query = "SELECT * FROM items WHERE 1=1"
+    query = "SELECT * FROM items WHERE is_active = 1"
     params: list = []
 
     if site_name:
@@ -134,13 +147,15 @@ def get_items(
         params.append(site_name)
 
     if status == "new":
-        query += " AND is_restock = 0 AND is_active = 1"
+        query += " AND is_restock = 0"
     elif status == "restock":
-        query += " AND is_restock = 1 AND is_active = 1"
-    else:
-        query += " AND is_active = 1"
+        query += " AND is_restock = 1"
+    elif status == "soldout":
+        query += " AND in_stock = 0"
+    elif status == "instock":
+        query += " AND in_stock = 1"
 
-    query += " ORDER BY last_seen DESC"
+    query += " ORDER BY in_stock DESC, last_seen DESC"
 
     with sqlite3.connect(DB_PATH) as conn:
         conn.row_factory = sqlite3.Row

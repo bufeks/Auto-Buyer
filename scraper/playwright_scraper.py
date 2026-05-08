@@ -37,22 +37,27 @@ def scrape_playwright(site_config: Dict[str, Any]) -> List[Item]:
         containers = page.query_selector_all(container_sel)
         items: List[Item] = []
 
-        for container in containers:
-            name_sel = selectors.get("name", "")
-            price_sel = selectors.get("price", "")
-            image_sel = selectors.get("image", "img")
-            link_sel = selectors.get("link", "a")
+        name_sel     = selectors.get("name", "")
+        price_sel    = selectors.get("price", "")
+        image_sel    = selectors.get("image", "img")
+        link_sel     = selectors.get("link", "a")
+        soldout_sel  = selectors.get("sold_out", "")
 
-            name_el = container.query_selector(name_sel) if name_sel else None
+        for container in containers:
+            name_el  = container.query_selector(name_sel)  if name_sel  else None
             price_el = container.query_selector(price_sel) if price_sel else None
             image_el = container.query_selector(image_sel)
-            link_el = container.query_selector(link_sel)
+            link_el  = container.query_selector(link_sel)
 
             name = name_el.inner_text().strip() if name_el else ""
             if not name:
                 continue
 
             price = price_el.inner_text().strip() if price_el else None
+
+            in_stock = True
+            if soldout_sel:
+                in_stock = container.query_selector(soldout_sel) is None
 
             image_url = None
             if image_el:
@@ -77,6 +82,7 @@ def scrape_playwright(site_config: Dict[str, Any]) -> List[Item]:
                     name=name,
                     price=price,
                     image_url=image_url,
+                    in_stock=in_stock,
                     item_url=item_url,
                 )
             )

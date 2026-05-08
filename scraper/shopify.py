@@ -29,8 +29,7 @@ def scrape_shopify(site_config: Dict[str, Any]) -> List[Item]:
     for product in resp.json().get("products", []):
         variants = product.get("variants", [])
         available_variants = [v for v in variants if v.get("available")]
-        if not available_variants:
-            continue
+        in_stock = bool(available_variants)
 
         title = product.get("title", "")
         vendor = product.get("vendor", "")
@@ -38,7 +37,8 @@ def scrape_shopify(site_config: Dict[str, Any]) -> List[Item]:
 
         name = f"{vendor} {title}".strip() if vendor else title
 
-        prices = [float(v["price"]) for v in available_variants]
+        price_variants = available_variants if in_stock else variants
+        prices = [float(v["price"]) for v in price_variants if v.get("price")]
         price = f"¥{int(min(prices)):,}" if prices else None
 
         images = product.get("images", [])
@@ -52,6 +52,7 @@ def scrape_shopify(site_config: Dict[str, Any]) -> List[Item]:
                 name=name,
                 price=price,
                 image_url=image_url,
+                in_stock=in_stock,
                 item_url=item_url,
             )
         )

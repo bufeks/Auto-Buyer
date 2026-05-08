@@ -13,8 +13,11 @@
     .card-img-top { height: 220px; object-fit: cover; background: #eee; }
     .badge-new { background: #22c55e; }
     .badge-restock { background: #f97316; }
+    .badge-soldout { background: #6b7280; }
     .price { color: #dc2626; font-weight: 700; font-size: .95rem; }
-    .site-tag { font-size: .7rem; background: #6b7280; }
+    .price-soldout { color: #9ca3af; font-weight: 700; font-size: .95rem; text-decoration: line-through; }
+    .site-tag { font-size: .7rem; background: #374151; }
+    .card-soldout { opacity: .6; }
     .item-name { font-size: .85rem; font-weight: 600; line-height: 1.3; }
     .filter-bar { background: #fff; border-radius: 12px; padding: 1rem; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
     .log-table td, .log-table th { font-size: .78rem; }
@@ -34,8 +37,9 @@
 <div class="container-fluid px-4 py-4">
 
   <!-- Stats row -->
-  {% set new_count = items | selectattr("is_restock", "equalto", 0) | list | length %}
+  {% set new_count     = items | selectattr("is_restock", "equalto", 0) | selectattr("in_stock", "equalto", 1) | list | length %}
   {% set restock_count = items | selectattr("is_restock", "equalto", 1) | list | length %}
+  {% set soldout_count = items | selectattr("in_stock",   "equalto", 0) | list | length %}
   <div class="row g-3 mb-4">
     <div class="col-6 col-md-3">
       <div class="stat-card">
@@ -47,6 +51,12 @@
       <div class="stat-card">
         <div class="stat-num text-warning">{{ restock_count }}</div>
         <div class="text-muted small">リストック</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="stat-num text-secondary">{{ soldout_count }}</div>
+        <div class="text-muted small">SOLD OUT</div>
       </div>
     </div>
     <div class="col-6 col-md-3">
@@ -76,6 +86,8 @@
          class="btn {% if current_status == 'new' %}btn-success{% else %}btn-outline-secondary{% endif %}">新着</a>
       <a href="?status=restock&site={{ current_site }}"
          class="btn {% if current_status == 'restock' %}btn-warning{% else %}btn-outline-secondary{% endif %}">リストック</a>
+      <a href="?status=soldout&site={{ current_site }}"
+         class="btn {% if current_status == 'soldout' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">SOLD OUT</a>
     </div>
 
     <select class="form-select form-select-sm w-auto"
@@ -96,7 +108,8 @@
   <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-3 mb-5">
     {% for item in items %}
     <div class="col">
-      <a href="{{ item.item_url }}" target="_blank" rel="noopener" class="card h-100 text-decoration-none text-dark">
+      <a href="{{ item.item_url }}" target="_blank" rel="noopener"
+         class="card h-100 text-decoration-none text-dark {% if not item.in_stock %}card-soldout{% endif %}">
         {% if item.image_url %}
         <img src="{{ item.image_url }}"
              class="card-img-top"
@@ -111,7 +124,9 @@
 
         <div class="card-body p-2">
           <div class="d-flex gap-1 mb-1 flex-wrap">
-            {% if item.is_restock %}
+            {% if not item.in_stock %}
+            <span class="badge badge-soldout">SOLD OUT</span>
+            {% elif item.is_restock %}
             <span class="badge badge-restock">リストック</span>
             {% else %}
             <span class="badge badge-new">新着</span>
@@ -120,7 +135,7 @@
           </div>
           <p class="item-name mb-1">{{ item.name }}</p>
           {% if item.price %}
-          <p class="price mb-0">{{ item.price }}</p>
+          <p class="{% if item.in_stock %}price{% else %}price-soldout{% endif %} mb-0">{{ item.price }}</p>
           {% endif %}
           <p class="text-muted mb-0" style="font-size:.7rem;">
             {{ item.last_seen[:16] | replace("T"," ") }}

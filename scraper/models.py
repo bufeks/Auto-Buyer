@@ -10,6 +10,7 @@ class Item:
     item_url: str
     price: Optional[str] = None
     image_url: Optional[str] = None
+    in_stock: bool = True
     item_id: str = field(default="", init=True)
 
     def __post_init__(self) -> None:

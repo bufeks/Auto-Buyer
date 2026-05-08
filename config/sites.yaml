@@ -64,6 +64,7 @@ sites:
       price: "p[class*='_price_']"               # 価格
       image: "img[class*='_image_']"             # 画像
       link: "a[class*='_anchor_']"               # 商品リンク
+      sold_out: "p[class*='soldOut']"            # SOLD OUTバッジ
 
   # ── HIKER WORKSHOP ────────────────────────────────────────────
   - name: "HIKER WORKSHOP"
