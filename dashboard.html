@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SUPPLY TRACKER - 新着 / リストック</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background:#f5f5f5; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    .navbar-brand { font-weight:700; letter-spacing:-.5px; }
+    .card { border:none; border-radius:12px; overflow:hidden; transition:transform .15s,box-shadow .15s; }
+    .card:hover { transform:translateY(-4px); box-shadow:0 8px 24px rgba(0,0,0,.12); }
+    .card-img-top { height:220px; object-fit:cover; background:#eee; }
+    .badge-new { background:#22c55e; }
+    .badge-restock { background:#f97316; }
+    .price { color:#dc2626; font-weight:700; font-size:.95rem; }
+    .site-tag { font-size:.7rem; background:#6b7280; }
+    .item-name { font-size:.85rem; font-weight:600; line-height:1.3; }
+    .filter-bar { background:#fff; border-radius:12px; padding:1rem; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+    .stat-card { background:#fff; border-radius:12px; padding:1rem 1.25rem; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+    .stat-num { font-size:1.8rem; font-weight:700; line-height:1; }
+  </style>
+</head>
+<body>
+<nav class="navbar navbar-dark bg-dark">
+  <div class="container-fluid px-4">
+    <span class="navbar-brand">SUPPLY TRACKER</span>
+    <span class="text-secondary small" id="count-label"></span>
+  </div>
+</nav>
+<div class="container-fluid px-4 py-4">
+  <!-- Stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-num text-success" id="stat-new">-</div><div class="text-muted small">新着</div></div></div>
+    <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-num text-warning" id="stat-restock">-</div><div class="text-muted small">リストック</div></div></div>
+    <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-num" id="stat-total">-</div><div class="text-muted small">合計</div></div></div>
+    <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-num" id="stat-last" style="font-size:1rem;padding-top:.4rem;">-</div><div class="text-muted small">最終取得</div></div></div>
+  </div>
+  <!-- Filters -->
+  <div class="filter-bar mb-4 d-flex flex-wrap gap-2 align-items-center">
+    <div class="btn-group btn-group-sm" id="status-filters">
+      <button class="btn btn-dark" data-status="all">すべて</button>
+      <button class="btn btn-outline-secondary" data-status="new">新着</button>
+      <button class="btn btn-outline-secondary" data-status="restock">リストック</button>
+    </div>
+    <select class="form-select form-select-sm w-auto" id="site-filter">
+      <option value="">全サイト</option>
+    </select>
+  </div>
+  <!-- Grid -->
+  <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-3 mb-5" id="grid"></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const ALL_ITEMS = [{"item_id": "73c20d11019d63c2f386a36c9a215b2d", "site_name": "SUPPLY TOKYO", "name": "SUPPLY Cotton / Hemp Tee Ivory", "price": "¥6,050", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/1_dff43c3b-6949-4ac2-837a-a867bf70a4de.jpg?v=1777620307", "item_url": "https://supply-tokyo.com/products/cotton-hemp-tee-ivory", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "845d1ad95bf2efbe0d7b78ca2d82aae9", "site_name": "SUPPLY TOKYO", "name": "SUPPLY Cotton / Hemp Tee Charcoal", "price": "¥6,050", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/11_2bfc5ec9-908c-49d4-9a54-036937dff7ca.jpg?v=1777619920", "item_url": "https://supply-tokyo.com/products/cotton-hemp-tee-charcoal", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "17d1a73fe9ce3c2c187a6a530a6dd5ff", "site_name": "SUPPLY TOKYO", "name": "NOROLL TWOFACE HAT GASIUS", "price": "¥11,550", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/1_d25a1174-949b-4067-ac33-377d23ff2084.jpg?v=1777534055", "item_url": "https://supply-tokyo.com/products/twoface-hat-gasius", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "457bc9097680cdf3eae9f4243adc06f7", "site_name": "SUPPLY TOKYO", "name": "SUPPLY Daily Shirts Brown Glen Check", "price": "¥26,400", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/1_b013572a-cca0-4a12-9ea8-79ab31f9db66.jpg?v=1764838301", "item_url": "https://supply-tokyo.com/products/daily-shirts-brown-glen-check-コピー", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "be5371ee8b6e8b7fd3f446f513e89d9e", "site_name": "SUPPLY TOKYO", "name": "COMFORTABLE REASON Paper Rip Shade Cap", "price": "¥9,900", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/1_a57475ce-a729-472e-a775-c27b7506e1cf.jpg?v=1777279344", "item_url": "https://supply-tokyo.com/products/paper-rip-shade-cap", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "940acbd0c02761fc5c2d62366290b3d0", "site_name": "SUPPLY TOKYO", "name": "ZEPTEPI Bag  Cooler  ZExchange", "price": "¥5,500", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/1_3048894a-c41a-4d30-9416-5acc80cf9d50.jpg?v=1777279130", "item_url": "https://supply-tokyo.com/products/bag-cooler-zexchange", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "fbdbe8cee3af881edea2b1a6ab6eccdd", "site_name": "SUPPLY TOKYO", "name": "ZEPTEPI LS Tee Grid Camo Sage", "price": "¥16,500", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/5_5d3ae85a-5d83-4be8-8ad4-23d02a199c5d.jpg?v=1777278951", "item_url": "https://supply-tokyo.com/products/ls-tee-grid-camo-sage", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "028a13a6d9bb209c9605b687452c3ff2", "site_name": "SUPPLY TOKYO", "name": "ZEPTEPI LS Tee Grid Camo Black", "price": "¥16,500", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/8_62f27d0b-826e-435c-a7c5-a66a0ad2752c.jpg?v=1777278768", "item_url": "https://supply-tokyo.com/products/ls-tee-grid-camo-black", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "6d16b23f1970085bd086adf651abab98", "site_name": "SUPPLY TOKYO", "name": "BOOKWORKS x Padmore & Barnes One Piece M665", "price": "¥44,000", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/1_ec976fd5-faa9-433f-8909-d0d8afbeb408.jpg?v=1777274367", "item_url": "https://supply-tokyo.com/products/one-piece-m665", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "b406760e75551819c2089d163bc30f65", "site_name": "SUPPLY TOKYO", "name": "SUPPLY Cotton / Hemp Tee Brown", "price": "¥6,050", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/6_9b0ed904-2b5d-44fc-a7e2-e1a1e10b325c.jpg?v=1777019885", "item_url": "https://supply-tokyo.com/products/cotton-hemp-tee-brown", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "301d7f2553c041a7e369c174498ddbb4", "site_name": "SUPPLY TOKYO", "name": "URU ORGANIC CHINO - WIDE PANTS L.Mocha", "price": "¥41,800", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/1_fd01126d-7632-4a90-84af-149b66f8e59a.jpg?v=1776842782", "item_url": "https://supply-tokyo.com/products/organic-chino-wide-pants-l-mocha", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "6901e4978efaa5f4edf1c0945e45f1d2", "site_name": "SUPPLY TOKYO", "name": "BIASDOGS UBIK White", "price": "¥13,200", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/1_4a11115b-d9b8-4ac9-891c-fcee76f7ef16.jpg?v=1776832260", "item_url": "https://supply-tokyo.com/products/ubik-white", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "3a87bac3c93c32f807b11ccb78843420", "site_name": "SUPPLY TOKYO", "name": "BIASDOGS NAPPY Black", "price": "¥13,200", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/5_ed8d3aa3-b1ec-4d09-a26d-86ed023fe882.jpg?v=1776832066", "item_url": "https://supply-tokyo.com/products/nappy-black", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "a688be51eaeb1237cdcc9ad8f6875382", "site_name": "SUPPLY TOKYO", "name": "MEPHISTO BARRACUDA MT Dark Brown", "price": "¥63,800", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/44.jpg?v=1764912913", "item_url": "https://supply-tokyo.com/products/barracuda-mt-dark-brown-コピー", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "67a9bbd354d280949b8517138a092d2e", "site_name": "SUPPLY TOKYO", "name": "MEPHISTO BARRACUDA MT Black", "price": "¥63,800", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/42.jpg?v=1764912936", "item_url": "https://supply-tokyo.com/products/barracuda-mt-black-コピー", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "7c4cb6ddcfb286745b91816af6fd66c2", "site_name": "SUPPLY TOKYO", "name": "MEPHISTO SAM Desert", "price": "¥44,000", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/1_bd71f8b4-0452-4133-9874-3fa4a530d881.jpg?v=1776668569", "item_url": "https://supply-tokyo.com/products/sam-desert", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "795d22fb2e6ba3f529fc1a3f27c4ca33", "site_name": "SUPPLY TOKYO", "name": "MEPHISTO NILTON Dark Brown", "price": "¥31,900", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/43.jpg?v=1764912988", "item_url": "https://supply-tokyo.com/products/nilton-dark-brown-コピー", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "17be7c3a2c37d9a6d7f995e749511a65", "site_name": "SUPPLY TOKYO", "name": "COMFORTABLE REASON Surface Dyed Denim Black", "price": "¥24,200", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/6_a5406386-902d-413b-b1be-f9ef55c1250b.jpg?v=1776413535", "item_url": "https://supply-tokyo.com/products/surface-dyed-denim-black", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "0781657885a171b3002cf18ef2201ce4", "site_name": "SUPPLY TOKYO", "name": "BELL STAMP WEAR Bellana TEE Navy", "price": "¥17,600", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/1_8a67244a-4554-4135-9145-2214c1bdbcbd.jpg?v=1776325023", "item_url": "https://supply-tokyo.com/products/bellana-tee-navy", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "7665f0a9a829842524fb305bd256185c", "site_name": "SUPPLY TOKYO", "name": "BELL STAMP WEAR Bellana TEE Black", "price": "¥17,600", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/4_937dbbf9-eedf-4f4b-a9a3-2d22b5e687ed.jpg?v=1776324814", "item_url": "https://supply-tokyo.com/products/bellana-tee-black", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "491ee04141498051a8b6d2852ab7d219", "site_name": "SUPPLY TOKYO", "name": "SUPPLY Cotton Rib Socks", "price": "¥2,310", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/11_b1ff1c16-abc4-4042-94d2-db5d10221065.jpg?v=1764838155", "item_url": "https://supply-tokyo.com/products/cotton-rib-socks-コピー", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "6c2f5895613b995c5e980ea44eeebd97", "site_name": "SUPPLY TOKYO", "name": "WORKING LS TRAP SHIRT", "price": "¥74,800", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/1_b6c8407b-bda5-480d-981a-0bba56a6f4e3.jpg?v=1776068063", "item_url": "https://supply-tokyo.com/products/ls-trap-shirt", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "32c69d88b971db6baffe3d1376cd2d41", "site_name": "SUPPLY TOKYO", "name": "SUPPLY Baggy Shorts Nasukon", "price": "¥25,300", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/1_8823afd8-698f-4361-9b39-e6c175be05cf.jpg?v=1775714781", "item_url": "https://supply-tokyo.com/products/buggy-shorts-nasukon", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "1eb95fa04c3a17ed3fb6330d151b4a48", "site_name": "SUPPLY TOKYO", "name": "SUPPLY Baggy Shorts Beige", "price": "¥25,300", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/7_3f2affc8-e32d-4ed6-88fa-c3f0472e2a7e.jpg?v=1775714478", "item_url": "https://supply-tokyo.com/products/buggy-shorts-beage", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "375c1a94347b7d0acd20f534d8783163", "site_name": "SUPPLY TOKYO", "name": "Midorikawa LONG BLAZER Black", "price": "¥143,000", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/1_adb35d75-f6e3-4b21-9993-c05483553efc.jpg?v=1775546556", "item_url": "https://supply-tokyo.com/products/long-blazer-black", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "abf69655802b8cf9b7b417ec68d1d66e", "site_name": "SUPPLY TOKYO", "name": "Midorikawa ORGANIC COTTON GILLET Black", "price": "¥79,200", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/8_5b7a7fe7-c48e-4d68-94b2-a242917d5382.jpg?v=1775546180", "item_url": "https://supply-tokyo.com/products/organic-cotton-gillet-black", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "0216a0bbfc1781a8d4171ee537239ab8", "site_name": "SUPPLY TOKYO", "name": "Midorikawa MOCCASIN CHUKKA BOOTS Brown", "price": "¥49,500", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/15_8740f50b-17f2-4972-b5ac-878dc118e2ba.jpg?v=1775545901", "item_url": "https://supply-tokyo.com/products/moccasin-chukka-boots-brown", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "17de91381a21c297c705217cc9a2d0c7", "site_name": "SUPPLY TOKYO", "name": "WORKING STEP COAT", "price": "¥165,000", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/1_44aa54ba-14d5-47c1-8fd0-b23d51bab805.jpg?v=1775118620", "item_url": "https://supply-tokyo.com/products/step-coat", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "e86875879e1b70932084589229a38d61", "site_name": "SUPPLY TOKYO", "name": "Alterior Logo Cap - Deep Spruce", "price": "¥9,900", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/5_d6360ea6-4305-43db-8791-c38a4256f46a.jpg?v=1775118185", "item_url": "https://supply-tokyo.com/products/logo-cap-deep-spruce", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "0933986ca7b8fe91b0aca2bb84befa9c", "site_name": "SUPPLY TOKYO", "name": "Alterior & Joe Garvey Sun Cap - Khaki", "price": "¥9,900", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/8_d4545b33-9d63-4205-986a-ac7bac58ae25.jpg?v=1775117874", "item_url": "https://supply-tokyo.com/products/sun-cap-khaki", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "22319f7a18b6df7cc2f5d351e5dd6ded", "site_name": "SUPPLY TOKYO", "name": "BRIGADE PRONTO LLEGRA VEGAN LEATHER VEST Blue", "price": "¥38,500", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/6_8eb5ca26-41e3-444f-bd1a-633063c31d75.jpg?v=1775117122", "item_url": "https://supply-tokyo.com/products/pronto-llegra-vegan-leather-vest-blue", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "2dcd2f0e673839f397141b7a85302bfe", "site_name": "SUPPLY TOKYO", "name": "BRIGADE PRONTO LLEGRA VEGAN LEATHER VEST Black", "price": "¥38,500", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/1_3f99990f-3f32-4f1b-84bb-c743a053f5df.jpg?v=1775117012", "item_url": "https://supply-tokyo.com/products/pronto-llegra-vegan-leather-vest-black", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "eedad8d7c0bfd83629a469013deeb4ea", "site_name": "SUPPLY TOKYO", "name": "BLOHM STORE SLIP Black", "price": "¥35,200", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/1_435f7b1a-9ee6-4a55-a7bc-3d1c232b1b39.jpg?v=1774508000", "item_url": "https://supply-tokyo.com/products/store-slip-black", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "5113c3f3ec1d3540b3be0cbe2614d498", "site_name": "SUPPLY TOKYO", "name": "crepuscule S/S Polo - Black", "price": "¥18,700", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/1_8bf9c8b4-792b-495d-9ad2-83a00ac4c293.jpg?v=1774341349", "item_url": "https://supply-tokyo.com/products/s-s-polo-black", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "a63e07c1483f1e3e0bd0df6aa08e6a7a", "site_name": "SUPPLY TOKYO", "name": "crepuscule Washi V/N knit T-shirts - Black", "price": "¥17,600", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/4_77ad9cd4-c895-40fa-bc6f-817559eb41e3.jpg?v=1774341205", "item_url": "https://supply-tokyo.com/products/washi-v-n-knit-t-shirts-black", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "bcbd1d68f301c66f195c1b36f6270112", "site_name": "SUPPLY TOKYO", "name": "SUPPLY Work trousers - Navy", "price": "¥23,100", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/1_e643541f-e01b-4e83-a8ae-7973386b4d97.jpg?v=1773904493", "item_url": "https://supply-tokyo.com/products/work-trousers-navy", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "c32ee232612342e6a499b7c988b7dc93", "site_name": "SUPPLY TOKYO", "name": "URU COTTON DENIM PRINT - TRUCKER JACKET - White", "price": "¥48,400", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/1_c85c9a48-4325-4a20-80f4-efdfb23aac38.jpg?v=1773726143", "item_url": "https://supply-tokyo.com/products/cotton-denim-print-trucker-jacket-white", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "9826b44c6f4fb29990da55b78e8e22b1", "site_name": "SUPPLY TOKYO", "name": "URU COTTON DENIM PRINT - TRUCKER JACKET - Black", "price": "¥48,400", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/11_ad1fa457-9eb5-4ca5-bec3-b408080462ec.jpg?v=1773725908", "item_url": "https://supply-tokyo.com/products/cotton-denim-print-trucker-jacket-black", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "510d0e4bdc277e4baebdb690b6fc0596", "site_name": "SUPPLY TOKYO", "name": "NOROLL DETOURS HAT", "price": "¥10,450", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/1_bcd7846b-76af-4c6b-810c-93965116b9ee.jpg?v=1773305405", "item_url": "https://supply-tokyo.com/products/detours-hat", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "a8936933999d7e5ec471c04796683822", "site_name": "SUPPLY TOKYO", "name": "Midorikawa SWEAT SHORTS", "price": "¥88,000", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/14_db07d8bd-f72c-472f-8f55-ab55fa678d35.jpg?v=1773041919", "item_url": "https://supply-tokyo.com/products/sweat-shorts", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "74ee01e5683f8f0d2694645281421b2f", "site_name": "SUPPLY TOKYO", "name": "Midorikawa LINING SHIRT - Candle", "price": "¥82,500", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/1_7c971736-128d-4591-ac2b-351beb02a700.jpg?v=1773041549", "item_url": "https://supply-tokyo.com/products/lining-shirt-candle", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "6354b4f74ba03c1b16f8168519d81c0c", "site_name": "SUPPLY TOKYO", "name": "UDAI × MPK STUDIO Day by day Tote", "price": "¥3,300", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/6_c5758e7b-140e-4dc3-88d5-82d959f7cefa.jpg?v=1772437709", "item_url": "https://supply-tokyo.com/products/day-by-day-tote", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}, {"item_id": "89495d9e713252d191a4266f3e2fe929", "site_name": "SUPPLY TOKYO", "name": "BELL STAMP WEAR BELLCUTA V4", "price": "¥93,500", "image_url": "https://cdn.shopify.com/s/files/1/0921/9565/1880/files/1_4203f94b-d124-4dda-8186-c9b68a39262d.jpg?v=1771640865", "item_url": "https://supply-tokyo.com/products/bellcuta-v4", "first_seen": "2026-05-08T00:28:21", "last_seen": "2026-05-08T00:29:46", "is_restock": 0, "is_active": 1}];
+const LOG = [{"id": 1, "site_name": "SUPPLY TOKYO", "scraped_at": "2026-05-08T00:29:46", "items_found": 43, "new_items": 0, "restock_items": 0, "error": null}];
+
+let currentStatus = 'all';
+let currentSite = '';
+
+function formatDate(s) { return s ? s.slice(0,16).replace('T',' ') : ''; }
+
+// Populate site filter
+const sites = [...new Set(ALL_ITEMS.map(i => i.site_name))].sort();
+const sel = document.getElementById('site-filter');
+sites.forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; sel.appendChild(o); });
+
+// Update stats
+function updateStats(items) {
+  const newItems = items.filter(i => !i.is_restock);
+  const restockItems = items.filter(i => i.is_restock);
+  document.getElementById('stat-new').textContent = newItems.length;
+  document.getElementById('stat-restock').textContent = restockItems.length;
+  document.getElementById('stat-total').textContent = items.length;
+  document.getElementById('count-label').textContent = items.length + ' 件表示中';
+  if (LOG.length) document.getElementById('stat-last').textContent = formatDate(LOG[0].scraped_at);
+}
+
+function render() {
+  let items = ALL_ITEMS.filter(i => i.is_active);
+  if (currentSite) items = items.filter(i => i.site_name === currentSite);
+  if (currentStatus === 'new') items = items.filter(i => !i.is_restock);
+  if (currentStatus === 'restock') items = items.filter(i => i.is_restock);
+
+  updateStats(items);
+
+  const grid = document.getElementById('grid');
+  if (!items.length) { grid.innerHTML = '<div class="col-12 text-center py-5 text-muted">アイテムがありません。</div>'; return; }
+
+  grid.innerHTML = items.map(item => `
+    <div class="col">
+      <div class="card h-100">
+        ${item.image_url
+          ? `<img src="${item.image_url}" class="card-img-top" alt="${item.name}" loading="lazy" onerror="this.src='https://placehold.co/300x220/eee/999?text=No+Image'">`
+          : `<div class="card-img-top d-flex align-items-center justify-content-center bg-light text-muted small">No Image</div>`}
+        <div class="card-body p-2">
+          <div class="d-flex gap-1 mb-1 flex-wrap">
+            ${item.is_restock
+              ? '<span class="badge badge-restock">リストック</span>'
+              : '<span class="badge badge-new">新着</span>'}
+            <span class="badge site-tag">${item.site_name}</span>
+          </div>
+          <p class="item-name mb-1">${item.name}</p>
+          ${item.price ? `<p class="price mb-0">${item.price}</p>` : ''}
+          <p class="text-muted mb-0" style="font-size:.7rem;">${formatDate(item.last_seen)}</p>
+        </div>
+        <div class="card-footer p-2 bg-white border-0">
+          <a href="${item.item_url}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-dark w-100">商品ページ</a>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Filter buttons
+document.getElementById('status-filters').addEventListener('click', e => {
+  const btn = e.target.closest('[data-status]');
+  if (!btn) return;
+  currentStatus = btn.dataset.status;
+  document.querySelectorAll('[data-status]').forEach(b => {
+    b.className = 'btn btn-outline-secondary';
+  });
+  btn.className = currentStatus === 'all' ? 'btn btn-dark'
+    : currentStatus === 'new' ? 'btn btn-success' : 'btn btn-warning';
+  render();
+});
+
+sel.addEventListener('change', () => { currentSite = sel.value; render(); });
+render();
+</script>
+</body>
+</html>
