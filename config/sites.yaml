@@ -65,6 +65,14 @@ sites:
       image: "img[class*='_image_']"             # 画像
       link: "a[class*='_anchor_']"               # 商品リンク
 
+  # ── HIKER WORKSHOP ────────────────────────────────────────────
+  - name: "HIKER WORKSHOP"
+    type: shopify
+    url: "https://hikerworkshop.jp"
+    limit: 50
+    interval_minutes: 30
+    enabled: true
+
   # ── DEVELOPMENT BY NOROLL ─────────────────────────────────────
   - name: "DEVELOPMENT BY NOROLL"
     type: shopify
