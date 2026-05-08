@@ -80,7 +80,7 @@ def main() -> None:
     logger.info("スケジューラー起動完了")
 
     app = create_app()
-    port = 5000
+    port = 5001
     logger.info("Webサーバー起動: http://localhost:%d", port)
     try:
         app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False)
