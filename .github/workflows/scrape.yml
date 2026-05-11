@@ -2,7 +2,7 @@ name: Scrape & Deploy Dashboard
 
 on:
   schedule:
-    - cron: '*/15 * * * *'   # every 15 minutes (GitHub Actions minimum is 5 min)
+    - cron: '*/15 * * * *'   # every 15 minutes
   workflow_dispatch:           # allow manual trigger from Actions tab
 
 permissions:
@@ -16,8 +16,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          ref: main
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -43,5 +41,5 @@ jobs:
             echo "No changes to commit"
           else
             git commit -m "auto: scrape $(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M JST')"
-            git push origin main
+            git push origin HEAD
           fi
