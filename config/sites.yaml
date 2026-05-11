@@ -1,0 +1,114 @@
+# アパレルECサイト設定ファイル
+# enabled: true のサイトのみスクレイピングされます。
+#
+# type: shopify  → Shopify の products.json エンドポイントを使用（推奨・安定）
+# type: generic  → CSS セレクタで任意サイトを取得
+# type: demo     → ローカルテスト用モックデータ
+
+sites:
+
+  # ── SUPPLY TOKYO ──────────────────────────────────────────────
+  - name: "SUPPLY TOKYO"
+    type: shopify
+    url: "https://supply-tokyo.com"
+    collection: "new-arrivals"   # /collections/<collection>/products.json を取得
+    interval_minutes: 10
+    enabled: true
+
+  # ── MIYAGEN ───────────────────────────────────────────────────
+  - name: "MIYAGEN"
+    type: shopify
+    url: "https://miyagen.com"
+    # collection 未指定 → /products.json を使用
+    interval_minutes: 10
+    enabled: true
+
+  # ── 瓦奇岳 (KAWARAKIDAKE) ─────────────────────────────────────
+  - name: "瓦奇岳"
+    type: shopify
+    url: "https://kawarakidake.com"
+    # collection 未指定 → /products.json を使用
+    interval_minutes: 10
+    enabled: true
+
+  # ── DIGAWEL ───────────────────────────────────────────────────
+  - name: "DIGAWEL"
+    type: shopify
+    url: "https://store.digawel.com"
+    # collection 未指定 → /products.json を使用
+    interval_minutes: 10
+    enabled: true
+
+  # ── 山荘飯島 (SANSO IIJIMA) ────────────────────────────────────
+  - name: "山荘飯島"
+    type: shopify
+    url: "https://sanso-iijima.com"
+    # /collections/all/products.json は503のため /products.json を使用
+    interval_minutes: 10
+    enabled: true
+
+  # ── TMB (TakaoMountainBook) ───────────────────────────────────
+  - name: "TMB"
+    type: playwright        # BASE製サイト（JSレンダリング）
+    url: "https://tmb.official.ec/"
+    interval_minutes: 10
+    enabled: true
+    selectors:
+      container: "li[class*='itemListLI']"      # 商品カード
+      name: "p[class*='itemTitleText']"          # 商品名
+      price: "p[class*='_price_']"               # 価格
+      image: "img[class*='_image_']"             # 画像
+      link: "a[class*='_anchor_']"               # 商品リンク
+      sold_out: "p[class*='soldOut']"            # SOLD OUTバッジ
+
+  # ── HIKER WORKSHOP ────────────────────────────────────────────
+  - name: "HIKER WORKSHOP"
+    type: shopify
+    url: "https://hikerworkshop.jp"
+    interval_minutes: 10
+    enabled: true
+
+  # ── DEVELOPMENT BY NOROLL ─────────────────────────────────────
+  - name: "DEVELOPMENT BY NOROLL"
+    type: shopify
+    url: "https://developmentbynoroll.space"
+    interval_minutes: 10
+    enabled: true
+
+  # ── noook ──────────────────────────────────────────────────────
+  - name: "noook"
+    type: shopify
+    url: "https://noook.jp"
+    interval_minutes: 10
+    enabled: true
+
+  # ── Shopify サイト追加例 ───────────────────────────────────────
+  # - name: "YOUR STORE"
+  #   type: shopify
+  #   url: "https://yourstore.com"
+  #   collection: "new-arrivals"
+  #   limit: 50
+  #   interval_minutes: 60
+  #   enabled: false
+
+  # ── 汎用HTMLスクレイパー追加例 ────────────────────────────────
+  # - name: "サイト名"
+  #   type: generic
+  #   url: "https://example.com/new-arrivals"
+  #   interval_minutes: 60
+  #   enabled: false
+  #   headers:
+  #     User-Agent: "Mozilla/5.0"
+  #   selectors:
+  #     container: ".product-item"    # 商品1件ごとの要素
+  #     name: ".product-name"         # 商品名
+  #     price: ".product-price"       # 価格
+  #     image: "img"                  # 画像
+  #     link: "a"                     # リンク
+
+  # ── デモ（テスト用モックデータ）─────────────────────────────
+  # - name: "デモ"
+  #   type: demo
+  #   interval_minutes: 10
+  #   seed: 42
+  #   enabled: false

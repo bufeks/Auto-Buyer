@@ -1,0 +1,190 @@
+import sqlite3
+from datetime import datetime, timezone, timedelta
+from pathlib import Path
+from typing import List, Optional
+
+_JST = timezone(timedelta(hours=9))
+
+
+def _now_jst() -> str:
+    return datetime.now(_JST).strftime("%Y-%m-%dT%H:%M:%S")
+
+from scraper.models import Item
+
+DB_PATH = Path(__file__).parent.parent / "data" / "items.db"
+
+
+def init_db() -> None:
+    DB_PATH.parent.mkdir(exist_ok=True)
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.executescript("""
+            CREATE TABLE IF NOT EXISTS items (
+                item_id     TEXT PRIMARY KEY,
+                site_name   TEXT NOT NULL,
+                name        TEXT NOT NULL,
+                price       TEXT,
+                image_url   TEXT,
+                item_url    TEXT NOT NULL,
+                first_seen  TEXT NOT NULL,
+                last_seen   TEXT NOT NULL,
+                is_restock  INTEGER NOT NULL DEFAULT 0,
+                is_active   INTEGER NOT NULL DEFAULT 1,
+                in_stock    INTEGER NOT NULL DEFAULT 1
+            );
+
+            CREATE TABLE IF NOT EXISTS scrape_log (
+                id              INTEGER PRIMARY KEY AUTOINCREMENT,
+                site_name       TEXT NOT NULL,
+                scraped_at      TEXT NOT NULL,
+                items_found     INTEGER DEFAULT 0,
+                new_items       INTEGER DEFAULT 0,
+                restock_items   INTEGER DEFAULT 0,
+                error           TEXT
+            );
+        """)
+        # マイグレーション: 既存DBにカラムが無ければ追加
+        cols = {row[1] for row in conn.execute("PRAGMA table_info(items)")}
+        if "in_stock" not in cols:
+            conn.execute("ALTER TABLE items ADD COLUMN in_stock INTEGER NOT NULL DEFAULT 1")
+
+
+def upsert_items(site_name: str, scraped: List[Item]) -> dict:
+    """Persist scraped items, detecting new arrivals and restocks."""
+    now = _now_jst()
+
+    with sqlite3.connect(DB_PATH) as conn:
+        existing = {
+            row[0]: {"is_active": bool(row[1]), "in_stock": bool(row[2])}
+            for row in conn.execute(
+                "SELECT item_id, is_active, in_stock FROM items WHERE site_name = ?",
+                (site_name,),
+            )
+        }
+
+        scraped_ids = {item.item_id for item in scraped}
+        new_count = restock_count = 0
+
+        for item in scraped:
+            stock_int = 1 if item.in_stock else 0
+            if item.item_id not in existing:
+                conn.execute(
+                    """
+                    INSERT INTO items
+                        (item_id, site_name, name, price, image_url, item_url,
+                         first_seen, last_seen, is_restock, is_active, in_stock)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 1, ?)
+                    """,
+                    (
+                        item.item_id, site_name, item.name, item.price,
+                        item.image_url, item.item_url, now, now, stock_int,
+                    ),
+                )
+                new_count += 1
+            else:
+                prev = existing[item.item_id]
+                # 在庫復活（SOLD OUT → 在庫あり）または非アクティブからの復活 → リストック
+                is_restock = (
+                    (not prev["in_stock"] and item.in_stock) or
+                    (not prev["is_active"] and item.in_stock)
+                )
+                if is_restock:
+                    restock_count += 1
+
+                conn.execute(
+                    """
+                    UPDATE items
+                    SET is_active = 1, last_seen = ?, name = ?, price = ?,
+                        image_url = ?, in_stock = ?,
+                        is_restock = CASE WHEN ? THEN 1 ELSE is_restock END
+                    WHERE item_id = ?
+                    """,
+                    (
+                        now, item.name, item.price, item.image_url,
+                        stock_int, 1 if is_restock else 0,
+                        item.item_id,
+                    ),
+                )
+
+        # サイトから消えたアイテム → 非アクティブ
+        for item_id in existing:
+            if item_id not in scraped_ids:
+                conn.execute(
+                    "UPDATE items SET is_active = 0 WHERE item_id = ?",
+                    (item_id,),
+                )
+
+    return {"total": len(scraped), "new": new_count, "restock": restock_count}
+
+
+def log_scrape(
+    site_name: str,
+    items_found: int,
+    new_items: int,
+    restock_items: int,
+    error: Optional[str] = None,
+) -> None:
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute(
+            """
+            INSERT INTO scrape_log
+                (site_name, scraped_at, items_found, new_items, restock_items, error)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                site_name,
+                _now_jst(),
+                items_found,
+                new_items,
+                restock_items,
+                error,
+            ),
+        )
+
+
+def get_items(
+    site_name: Optional[str] = None,
+    status: Optional[str] = None,
+) -> List[dict]:
+    query = "SELECT * FROM items WHERE is_active = 1"
+    params: list = []
+
+    if site_name:
+        query += " AND site_name = ?"
+        params.append(site_name)
+
+    if status == "new":
+        query += " AND is_restock = 0"
+    elif status == "restock":
+        query += " AND is_restock = 1"
+    elif status == "soldout":
+        query += " AND in_stock = 0"
+    elif status == "instock":
+        query += " AND in_stock = 1"
+
+    query += " ORDER BY in_stock DESC, last_seen DESC"
+
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.row_factory = sqlite3.Row
+        return [dict(row) for row in conn.execute(query, params)]
+
+
+def get_sites() -> List[str]:
+    with sqlite3.connect(DB_PATH) as conn:
+        return [
+            row[0]
+            for row in conn.execute(
+                "SELECT DISTINCT site_name FROM items ORDER BY site_name"
+            )
+        ]
+
+
+def get_scrape_log(limit: int = 20) -> List[dict]:
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.row_factory = sqlite3.Row
+        return [
+            dict(row)
+            for row in conn.execute(
+                "SELECT * FROM scrape_log ORDER BY scraped_at DESC LIMIT ?",
+                (limit,),
+            )
+        ]
