@@ -46,6 +46,7 @@ def _build_html(items_json: str, sites_json: str, log_json: str, updated: str) -
     .badge-new {{ background:#22c55e; }}
     .badge-restock {{ background:#f97316; }}
     .badge-soldout {{ background:#6b7280; }}
+    .badge-instock {{ background:#3b82f6; }}
     .price {{ color:#dc2626; font-weight:700; font-size:.95rem; }}
     .price-soldout {{ color:#9ca3af; font-weight:700; font-size:.95rem; text-decoration:line-through; }}
     .site-tag {{ font-size:.7rem; background:#374151; }}
@@ -132,13 +133,25 @@ const ALL_ITEMS = {items_json};
 const ALL_SITES = {sites_json};
 const SCRAPE_LOG = {log_json};
 
+const NEW_WINDOW_MS = 72 * 3600 * 1000;  // 新着・リストックの表示期間（72時間）
+
+function isRecentNew(item) {{
+  return (Date.now() - new Date(item.first_seen).getTime()) < NEW_WINDOW_MS;
+}}
+
+function isRecentRestock(item) {{
+  return item.restock_at
+    ? (Date.now() - new Date(item.restock_at).getTime()) < NEW_WINDOW_MS
+    : false;
+}}
+
 let currentStatus = "all";
 let currentSite = "";
 
 function matchStatus(item, status) {{
   if (status === "all")     return item.is_active;
-  if (status === "new")     return item.is_active && !item.is_restock && item.in_stock;
-  if (status === "restock") return item.is_active && item.is_restock;
+  if (status === "new")     return item.is_active && !item.is_restock && item.in_stock && isRecentNew(item);
+  if (status === "restock") return item.is_active && item.is_restock && isRecentRestock(item);
   if (status === "soldout") return item.is_active && !item.in_stock;
   if (status === "instock") return item.is_active && item.in_stock;
   return item.is_active;
@@ -146,9 +159,13 @@ function matchStatus(item, status) {{
 
 function cardHTML(item) {{
   const soldout  = !item.in_stock;
-  const restock  = item.is_restock && item.in_stock;
-  const badgeCls = soldout ? "badge-soldout" : restock ? "badge-restock" : "badge-new";
-  const badgeTxt = soldout ? "SOLD OUT" : restock ? "リストック" : "新着";
+  const restock  = item.in_stock && item.is_restock && isRecentRestock(item);
+  const newItem  = item.in_stock && !item.is_restock && isRecentNew(item);
+  let badgeCls, badgeTxt;
+  if (soldout)        {{ badgeCls = "badge-soldout"; badgeTxt = "SOLD OUT"; }}
+  else if (restock)   {{ badgeCls = "badge-restock"; badgeTxt = "リストック"; }}
+  else if (newItem)   {{ badgeCls = "badge-new";     badgeTxt = "新着"; }}
+  else                {{ badgeCls = "badge-instock";  badgeTxt = "在庫あり"; }}
   const img = item.image_url
     ? `<img src="${{item.image_url}}" class="card-img-top" alt="${{item.name}}" loading="lazy"
          onerror="this.src='https://placehold.co/300x220/eeeeee/999999?text=No+Image'">`
@@ -175,8 +192,8 @@ function cardHTML(item) {{
 
 function updateStats(filtered) {{
   const active = ALL_ITEMS.filter(i => i.is_active);
-  document.getElementById("stat-new").textContent     = active.filter(i => !i.is_restock && i.in_stock).length;
-  document.getElementById("stat-restock").textContent = active.filter(i => i.is_restock).length;
+  document.getElementById("stat-new").textContent     = active.filter(i => !i.is_restock && i.in_stock && isRecentNew(i)).length;
+  document.getElementById("stat-restock").textContent = active.filter(i => i.is_restock && isRecentRestock(i)).length;
   document.getElementById("stat-soldout").textContent = active.filter(i => !i.in_stock).length;
   document.getElementById("stat-sites").textContent   = ALL_SITES.length;
   document.getElementById("count-label").textContent  = filtered.length + " 件表示中";
