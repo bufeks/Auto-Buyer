@@ -172,6 +172,16 @@ function cardHTML(item) {{
     : `<div class="card-img-top d-flex align-items-center justify-content-center bg-light text-muted small">No Image</div>`;
   const priceTag = item.price
     ? `<p class="${{soldout ? 'price-soldout' : 'price'}} mb-0">${{item.price}}</p>` : "";
+  const allV   = item.variants_all       ? JSON.parse(item.variants_all)       : [];
+  const availV = item.variants_available ? JSON.parse(item.variants_available) : [];
+  const variantTag = allV.length ? (() => {{
+    return allV.map(v => {{
+      const ok = availV.includes(v);
+      return `<span style="font-size:.65rem;padding:1px 5px;border-radius:3px;margin:1px;display:inline-block;
+        background:${{ok ? '#e0f2fe' : '#f3f4f6'}};color:${{ok ? '#0369a1' : '#9ca3af'}};
+        text-decoration:${{ok ? 'none' : 'line-through'}}">${{v}}</span>`;
+    }}).join("");
+  }})() : "";
   const ts = (item.last_seen || "").slice(0,16).replace("T"," ");
   return `<div class="col">
   <a href="${{item.item_url}}" target="_blank" rel="noopener"
@@ -184,6 +194,7 @@ function cardHTML(item) {{
       </div>
       <p class="item-name mb-1">${{item.name}}</p>
       ${{priceTag}}
+      ${{variantTag ? `<div class="mt-1">${{variantTag}}</div>` : ""}}
       <p class="text-muted mb-0" style="font-size:.7rem;">${{ts}}</p>
     </div>
   </a>

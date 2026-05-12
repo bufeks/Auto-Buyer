@@ -1,3 +1,4 @@
+import json
 import requests
 from typing import Any, Dict, List
 from .models import Item
@@ -58,6 +59,16 @@ def scrape_shopify(site_config: Dict[str, Any]) -> List[Item]:
 
         item_url = f"{base_url}/products/{handle}"
 
+        def _variant_label(v: Dict) -> str:
+            parts = [v.get(f"option{i}") for i in (1, 2, 3) if v.get(f"option{i}") and v.get(f"option{i}") != "Default Title"]
+            return " / ".join(parts) if parts else v.get("title", "")
+
+        all_labels   = [_variant_label(v) for v in variants]
+        avail_labels = [_variant_label(v) for v in available_variants]
+        # バリアントが1種類で "Default Title" 相当なら省略
+        variants_all       = json.dumps(all_labels,   ensure_ascii=False) if len(variants) > 1 else None
+        variants_available = json.dumps(avail_labels, ensure_ascii=False) if len(variants) > 1 else None
+
         items.append(
             Item(
                 site_name=site_name,
@@ -65,6 +76,8 @@ def scrape_shopify(site_config: Dict[str, Any]) -> List[Item]:
                 price=price,
                 image_url=image_url,
                 in_stock=in_stock,
+                variants_available=variants_available,
+                variants_all=variants_all,
                 item_url=item_url,
             )
         )

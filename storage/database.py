@@ -48,6 +48,10 @@ def init_db() -> None:
             conn.execute("ALTER TABLE items ADD COLUMN in_stock INTEGER NOT NULL DEFAULT 1")
         if "restock_at" not in cols:
             conn.execute("ALTER TABLE items ADD COLUMN restock_at TEXT")
+        if "variants_available" not in cols:
+            conn.execute("ALTER TABLE items ADD COLUMN variants_available TEXT")
+        if "variants_all" not in cols:
+            conn.execute("ALTER TABLE items ADD COLUMN variants_all TEXT")
 
 
 def upsert_items(site_name: str, scraped: List[Item]) -> dict:
@@ -73,12 +77,14 @@ def upsert_items(site_name: str, scraped: List[Item]) -> dict:
                     """
                     INSERT INTO items
                         (item_id, site_name, name, price, image_url, item_url,
-                         first_seen, last_seen, is_restock, is_active, in_stock)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 1, ?)
+                         first_seen, last_seen, is_restock, is_active, in_stock,
+                         variants_available, variants_all)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 1, ?, ?, ?)
                     """,
                     (
                         item.item_id, site_name, item.name, item.price,
                         item.image_url, item.item_url, now, now, stock_int,
+                        item.variants_available, item.variants_all,
                     ),
                 )
                 new_count += 1
@@ -98,7 +104,8 @@ def upsert_items(site_name: str, scraped: List[Item]) -> dict:
                     SET is_active = 1, last_seen = ?, name = ?, price = ?,
                         image_url = ?, in_stock = ?,
                         is_restock = CASE WHEN ? THEN 1 ELSE is_restock END,
-                        restock_at = CASE WHEN ? THEN ? ELSE restock_at END
+                        restock_at = CASE WHEN ? THEN ? ELSE restock_at END,
+                        variants_available = ?, variants_all = ?
                     WHERE item_id = ?
                     """,
                     (
@@ -106,6 +113,7 @@ def upsert_items(site_name: str, scraped: List[Item]) -> dict:
                         stock_int,
                         1 if is_restock else 0,
                         1 if is_restock else 0, now if is_restock else None,
+                        item.variants_available, item.variants_all,
                         item.item_id,
                     ),
                 )
