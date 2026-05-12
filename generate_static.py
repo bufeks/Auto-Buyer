@@ -246,6 +246,17 @@ if (SCRAPE_LOG.length) {{
 }}
 
 render();
+
+// 自動リロード: 5分ごとにページの更新タイムスタンプを確認し、新しければリロード
+const CURRENT_UPDATED = "{updated}";
+setInterval(async () => {{
+  try {{
+    const res = await fetch(location.href, {{ cache: "no-store" }});
+    const text = await res.text();
+    const m = text.match(/const CURRENT_UPDATED = "([^"]+)"/);
+    if (m && m[1] !== CURRENT_UPDATED) location.reload();
+  }} catch (e) {{ /* ネットワークエラーは無視 */ }}
+}}, 5 * 60 * 1000);
 </script>
 </body>
 </html>"""

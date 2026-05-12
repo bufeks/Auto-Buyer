@@ -62,7 +62,7 @@
     </div>
     <div class="col-6 col-md-3">
       <div class="stat-card">
-        <div class="stat-num" style="font-size:1rem; padding-top:.4rem;">2026-05-12 12:57 JST</div>
+        <div class="stat-num" style="font-size:1rem; padding-top:.4rem;">2026-05-12 13:14 JST</div>
         <div class="text-muted small">最終取得</div>
       </div>
     </div>
@@ -215,6 +215,17 @@ if (SCRAPE_LOG.length) {
 }
 
 render();
+
+// 自動リロード: 5分ごとにページの更新タイムスタンプを確認し、新しければリロード
+const CURRENT_UPDATED = "2026-05-12 13:14 JST";
+setInterval(async () => {
+  try {
+    const res = await fetch(location.href, { cache: "no-store" });
+    const text = await res.text();
+    const m = text.match(/const CURRENT_UPDATED = "([^"]+)"/);
+    if (m && m[1] !== CURRENT_UPDATED) location.reload();
+  } catch (e) { /* ネットワークエラーは無視 */ }
+}, 5 * 60 * 1000);
 </script>
 </body>
 </html>
