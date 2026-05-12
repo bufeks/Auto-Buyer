@@ -46,6 +46,8 @@ def init_db() -> None:
         cols = {row[1] for row in conn.execute("PRAGMA table_info(items)")}
         if "in_stock" not in cols:
             conn.execute("ALTER TABLE items ADD COLUMN in_stock INTEGER NOT NULL DEFAULT 1")
+        if "restock_at" not in cols:
+            conn.execute("ALTER TABLE items ADD COLUMN restock_at TEXT")
 
 
 def upsert_items(site_name: str, scraped: List[Item]) -> dict:
@@ -95,12 +97,15 @@ def upsert_items(site_name: str, scraped: List[Item]) -> dict:
                     UPDATE items
                     SET is_active = 1, last_seen = ?, name = ?, price = ?,
                         image_url = ?, in_stock = ?,
-                        is_restock = CASE WHEN ? THEN 1 ELSE is_restock END
+                        is_restock = CASE WHEN ? THEN 1 ELSE is_restock END,
+                        restock_at = CASE WHEN ? THEN ? ELSE restock_at END
                     WHERE item_id = ?
                     """,
                     (
                         now, item.name, item.price, item.image_url,
-                        stock_int, 1 if is_restock else 0,
+                        stock_int,
+                        1 if is_restock else 0,
+                        1 if is_restock else 0, now if is_restock else None,
                         item.item_id,
                     ),
                 )
