@@ -59,6 +59,8 @@ def scrape_shopify(site_config: Dict[str, Any]) -> List[Item]:
 
         item_url = f"{base_url}/products/{handle}"
 
+        published_at = product.get("published_at")  # ISO8601 with tz
+
         def _variant_label(v: Dict) -> str:
             parts = [v.get(f"option{i}") for i in (1, 2, 3) if v.get(f"option{i}") and v.get(f"option{i}") != "Default Title"]
             return " / ".join(parts) if parts else v.get("title", "")
@@ -78,6 +80,7 @@ def scrape_shopify(site_config: Dict[str, Any]) -> List[Item]:
                 in_stock=in_stock,
                 variants_available=variants_available,
                 variants_all=variants_all,
+                published_at=published_at,
                 item_url=item_url,
             )
         )

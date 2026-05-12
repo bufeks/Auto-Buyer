@@ -182,6 +182,20 @@ function cardHTML(item) {{
         text-decoration:${{ok ? 'none' : 'line-through'}}">${{v}}</span>`;
     }}).join("");
   }})() : "";
+  const publishedTag = item.published_at ? (() => {{
+    const d = new Date(item.published_at);
+    const label = d.toLocaleString("ja-JP", {{timeZone:"Asia/Tokyo",month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"}});
+    return `<p class="text-muted mb-0" style="font-size:.68rem;">発売 ${{label}}</p>`;
+  }})() : "";
+  const soldoutTag = (() => {{
+    if (!soldout || !item.soldout_at || !item.published_at) return "";
+    const diffMs = new Date(item.soldout_at) - new Date(item.published_at);
+    if (diffMs <= 0) return "";
+    const h = Math.floor(diffMs / 3600000);
+    const m = Math.floor((diffMs % 3600000) / 60000);
+    const label = h > 0 ? `${{h}}時間${{m}}分で完売` : `${{m}}分で完売`;
+    return `<p class="text-danger mb-0" style="font-size:.68rem;font-weight:600;">⏱ ${{label}}</p>`;
+  }})();
   const ts = (item.last_seen || "").slice(0,16).replace("T"," ");
   return `<div class="col">
   <a href="${{item.item_url}}" target="_blank" rel="noopener"
@@ -195,7 +209,8 @@ function cardHTML(item) {{
       <p class="item-name mb-1">${{item.name}}</p>
       ${{priceTag}}
       ${{variantTag ? `<div class="mt-1">${{variantTag}}</div>` : ""}}
-      <p class="text-muted mb-0" style="font-size:.7rem;">${{ts}}</p>
+      ${{publishedTag}}
+      ${{soldoutTag}}
     </div>
   </a>
 </div>`;
