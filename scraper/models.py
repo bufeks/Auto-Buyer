@@ -11,6 +11,9 @@ class Item:
     price: Optional[str] = None
     image_url: Optional[str] = None
     in_stock: bool = True
+    variants_available: Optional[str] = None  # JSON: ["S","M"] など在庫ありバリアント
+    variants_all: Optional[str] = None        # JSON: ["S","M","L"] など全バリアント
+    published_at: Optional[str] = None        # ストア公開日時（Shopify: published_at）
     item_id: str = field(default="", init=True)
 
     def __post_init__(self) -> None:

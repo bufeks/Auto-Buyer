@@ -48,6 +48,14 @@ def init_db() -> None:
             conn.execute("ALTER TABLE items ADD COLUMN in_stock INTEGER NOT NULL DEFAULT 1")
         if "restock_at" not in cols:
             conn.execute("ALTER TABLE items ADD COLUMN restock_at TEXT")
+        if "variants_available" not in cols:
+            conn.execute("ALTER TABLE items ADD COLUMN variants_available TEXT")
+        if "variants_all" not in cols:
+            conn.execute("ALTER TABLE items ADD COLUMN variants_all TEXT")
+        if "published_at" not in cols:
+            conn.execute("ALTER TABLE items ADD COLUMN published_at TEXT")
+        if "soldout_at" not in cols:
+            conn.execute("ALTER TABLE items ADD COLUMN soldout_at TEXT")
 
 
 def upsert_items(site_name: str, scraped: List[Item]) -> dict:
@@ -63,6 +71,7 @@ def upsert_items(site_name: str, scraped: List[Item]) -> dict:
             )
         }
 
+
         scraped_ids = {item.item_id for item in scraped}
         new_count = restock_count = 0
 
@@ -73,12 +82,14 @@ def upsert_items(site_name: str, scraped: List[Item]) -> dict:
                     """
                     INSERT INTO items
                         (item_id, site_name, name, price, image_url, item_url,
-                         first_seen, last_seen, is_restock, is_active, in_stock)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 1, ?)
+                         first_seen, last_seen, is_restock, is_active, in_stock,
+                         variants_available, variants_all, published_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 1, ?, ?, ?, ?)
                     """,
                     (
                         item.item_id, site_name, item.name, item.price,
                         item.image_url, item.item_url, now, now, stock_int,
+                        item.variants_available, item.variants_all, item.published_at,
                     ),
                 )
                 new_count += 1
@@ -92,13 +103,19 @@ def upsert_items(site_name: str, scraped: List[Item]) -> dict:
                 if is_restock:
                     restock_count += 1
 
+                # 在庫あり → SOLD OUT のタイミングを記録
+                went_soldout = prev["in_stock"] and not item.in_stock
+
                 conn.execute(
                     """
                     UPDATE items
                     SET is_active = 1, last_seen = ?, name = ?, price = ?,
                         image_url = ?, in_stock = ?,
                         is_restock = CASE WHEN ? THEN 1 ELSE is_restock END,
-                        restock_at = CASE WHEN ? THEN ? ELSE restock_at END
+                        restock_at = CASE WHEN ? THEN ? ELSE restock_at END,
+                        soldout_at = CASE WHEN ? THEN ? ELSE soldout_at END,
+                        variants_available = ?, variants_all = ?,
+                        published_at = COALESCE(published_at, ?)
                     WHERE item_id = ?
                     """,
                     (
@@ -106,6 +123,9 @@ def upsert_items(site_name: str, scraped: List[Item]) -> dict:
                         stock_int,
                         1 if is_restock else 0,
                         1 if is_restock else 0, now if is_restock else None,
+                        1 if went_soldout else 0, now if went_soldout else None,
+                        item.variants_available, item.variants_all,
+                        item.published_at,
                         item.item_id,
                     ),
                 )
