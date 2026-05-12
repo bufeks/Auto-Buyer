@@ -62,7 +62,7 @@
     </div>
     <div class="col-6 col-md-3">
       <div class="stat-card">
-        <div class="stat-num" style="font-size:1rem; padding-top:.4rem;">2026-05-12 13:14 JST</div>
+        <div class="stat-num" style="font-size:1rem; padding-top:.4rem;">2026-05-12 13:18 JST</div>
         <div class="text-muted small">最終取得</div>
       </div>
     </div>
@@ -168,10 +168,22 @@ function updateStats(filtered) {
   document.getElementById("count-label").textContent  = filtered.length + " 件表示中";
 }
 
+function itemPriority(i) {
+  if (!i.in_stock)                               return 3;  // SOLD OUT
+  if (i.is_restock && isRecentRestock(i))        return 1;  // リストック
+  if (!i.is_restock && isRecentNew(i))           return 0;  // 新着
+  return 2;                                                  // 在庫あり
+}
+
 function render() {
   const filtered = ALL_ITEMS
     .filter(i => matchStatus(i, currentStatus))
-    .filter(i => !currentSite || i.site_name === currentSite);
+    .filter(i => !currentSite || i.site_name === currentSite)
+    .sort((a, b) => {
+      const pd = itemPriority(a) - itemPriority(b);
+      if (pd !== 0) return pd;
+      return (b.first_seen || "").localeCompare(a.first_seen || "");
+    });
   document.getElementById("grid").innerHTML = filtered.length
     ? filtered.map(cardHTML).join("")
     : `<div class="col-12 text-center py-5 text-muted"><p>アイテムがありません。</p></div>`;
@@ -217,7 +229,7 @@ if (SCRAPE_LOG.length) {
 render();
 
 // 自動リロード: 5分ごとにページの更新タイムスタンプを確認し、新しければリロード
-const CURRENT_UPDATED = "2026-05-12 13:14 JST";
+const CURRENT_UPDATED = "2026-05-12 13:18 JST";
 setInterval(async () => {
   try {
     const res = await fetch(location.href, { cache: "no-store" });

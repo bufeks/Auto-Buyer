@@ -199,10 +199,22 @@ function updateStats(filtered) {{
   document.getElementById("count-label").textContent  = filtered.length + " 件表示中";
 }}
 
+function itemPriority(i) {{
+  if (!i.in_stock)                               return 3;  // SOLD OUT
+  if (i.is_restock && isRecentRestock(i))        return 1;  // リストック
+  if (!i.is_restock && isRecentNew(i))           return 0;  // 新着
+  return 2;                                                  // 在庫あり
+}}
+
 function render() {{
   const filtered = ALL_ITEMS
     .filter(i => matchStatus(i, currentStatus))
-    .filter(i => !currentSite || i.site_name === currentSite);
+    .filter(i => !currentSite || i.site_name === currentSite)
+    .sort((a, b) => {{
+      const pd = itemPriority(a) - itemPriority(b);
+      if (pd !== 0) return pd;
+      return (b.first_seen || "").localeCompare(a.first_seen || "");
+    }});
   document.getElementById("grid").innerHTML = filtered.length
     ? filtered.map(cardHTML).join("")
     : `<div class="col-12 text-center py-5 text-muted"><p>アイテムがありません。</p></div>`;
