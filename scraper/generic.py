@@ -63,12 +63,16 @@ def scrape_generic(site_config: Dict[str, Any]) -> List[Item]:
             elif href.startswith("/"):
                 item_url = base + href
 
+        soldout_el = container.select_one(selectors.get("sold_out", "")) if selectors.get("sold_out") else None
+        in_stock = soldout_el is None
+
         items.append(
             Item(
                 site_name=site_name,
                 name=name,
                 price=price,
                 image_url=image_url,
+                in_stock=in_stock,
                 item_url=item_url,
             )
         )
