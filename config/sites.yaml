@@ -75,6 +75,20 @@ sites:
     interval_minutes: 10
     enabled: true
 
+  # ── ULTRA GOOD LUCK (UGL) ─────────────────────────────────────
+  - name: "UGL"
+    type: generic
+    url: "https://ugl.official.ec/"
+    interval_minutes: 10
+    enabled: true
+    selectors:
+      container: "div.item"
+      name: "div.itemTitle h2"
+      price: "li.itemPrice div"
+      image: "div.itemThumbImg img"
+      link: "a[href*='/items/']"
+      sold_out: "p.endOfSale"
+
   # ── noook ──────────────────────────────────────────────────────
   - name: "noook"
     type: shopify
