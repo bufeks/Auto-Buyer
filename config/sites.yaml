@@ -75,6 +75,19 @@ sites:
     interval_minutes: 10
     enabled: true
 
+  # ── BAL ORIGINAL ──────────────────────────────────────────────
+  - name: "BAL"
+    type: generic
+    url: "https://baloriginal.com/items"
+    interval_minutes: 10
+    enabled: true
+    selectors:
+      container: "a.product"
+      name: "p.p_name"
+      price: "p.p_price span"
+      image: "div.p_img img"
+      sold_out_class: "sold_out"   # コンテナ自身のクラスで判定
+
   # ── ULTRA GOOD LUCK (UGL) ─────────────────────────────────────
   - name: "UGL"
     type: generic

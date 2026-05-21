@@ -36,7 +36,12 @@ def scrape_generic(site_config: Dict[str, Any]) -> List[Item]:
         name_el = container.select_one(selectors.get("name", "")) if selectors.get("name") else None
         price_el = container.select_one(selectors.get("price", "")) if selectors.get("price") else None
         image_el = container.select_one(selectors.get("image", "img"))
-        link_el = container.select_one(selectors.get("link", "a"))
+        link_el = container.select_one(selectors.get("link", "a")) if selectors.get("link") else None
+        # コンテナ自体がリンク（<a> タグ）の場合はそれを使う
+        if link_el is None and container.name == "a":
+            link_el = container
+        elif link_el is None:
+            link_el = container.select_one("a")
 
         name = name_el.get_text(strip=True) if name_el else ""
         if not name:
@@ -64,7 +69,12 @@ def scrape_generic(site_config: Dict[str, Any]) -> List[Item]:
                 item_url = base + href
 
         soldout_el = container.select_one(selectors.get("sold_out", "")) if selectors.get("sold_out") else None
-        in_stock = soldout_el is None
+        # コンテナ自身のクラスで SOLD OUT を判定する場合
+        sold_out_class = selectors.get("sold_out_class")
+        if sold_out_class:
+            in_stock = sold_out_class not in container.get("class", [])
+        else:
+            in_stock = soldout_el is None
 
         items.append(
             Item(
