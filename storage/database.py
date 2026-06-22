@@ -56,6 +56,11 @@ def init_db() -> None:
             conn.execute("ALTER TABLE items ADD COLUMN published_at TEXT")
         if "soldout_at" not in cols:
             conn.execute("ALTER TABLE items ADD COLUMN soldout_at TEXT")
+        # 既存の SOLD OUT アイテムで soldout_at 未記録のものに first_seen を設定
+        conn.execute("""
+            UPDATE items SET soldout_at = first_seen
+            WHERE in_stock = 0 AND soldout_at IS NULL
+        """)
 
 
 def upsert_items(site_name: str, scraped: List[Item]) -> dict:
@@ -83,13 +88,14 @@ def upsert_items(site_name: str, scraped: List[Item]) -> dict:
                     INSERT INTO items
                         (item_id, site_name, name, price, image_url, item_url,
                          first_seen, last_seen, is_restock, is_active, in_stock,
-                         variants_available, variants_all, published_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 1, ?, ?, ?, ?)
+                         variants_available, variants_all, published_at, soldout_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 1, ?, ?, ?, ?, ?)
                     """,
                     (
                         item.item_id, site_name, item.name, item.price,
                         item.image_url, item.item_url, now, now, stock_int,
                         item.variants_available, item.variants_all, item.published_at,
+                        now if not item.in_stock else None,  # 初回から SOLD OUT なら記録
                     ),
                 )
                 new_count += 1
