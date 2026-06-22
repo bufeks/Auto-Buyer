@@ -75,6 +75,20 @@ sites:
     interval_minutes: 10
     enabled: true
 
+  # ── FRIDGE SETAGAYA ───────────────────────────────────────────
+  - name: "FRIDGE"
+    type: generic
+    url: "https://fridgesetagaya.shop-pro.jp/"
+    interval_minutes: 10
+    enabled: true
+    selectors:
+      container: "li[class*='item_list']"
+      name: "span.item_name"
+      price: "span.item_price"
+      image: "img.item_img"
+      link: "a[href*='?pid=']"
+      sold_out: "span.item_soldout"
+
   # ── BAL ORIGINAL ──────────────────────────────────────────────
   - name: "BAL"
     type: generic
