@@ -1,6 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
 from typing import Any, Dict, List
 from .models import Item
 
@@ -61,12 +61,8 @@ def scrape_generic(site_config: Dict[str, Any]) -> List[Item]:
         item_url = url
         if link_el:
             href = link_el.get("href", "")
-            if href.startswith("http"):
-                item_url = href
-            elif href.startswith("//"):
-                item_url = "https:" + href
-            elif href.startswith("/"):
-                item_url = base + href
+            if href:
+                item_url = urljoin(url, href)
 
         soldout_el = container.select_one(selectors.get("sold_out", "")) if selectors.get("sold_out") else None
         # コンテナ自身のクラスで SOLD OUT を判定する場合
