@@ -55,6 +55,9 @@ def _build_html(items_json: str, sites_json: str, log_json: str, updated: str) -
     .stat-card {{ background:#fff; border-radius:12px; padding:1rem 1.25rem; box-shadow:0 1px 4px rgba(0,0,0,.06); }}
     .stat-num {{ font-size:1.8rem; font-weight:700; line-height:1; }}
     .log-table td, .log-table th {{ font-size:.78rem; }}
+    .site-panel {{ background:#fff; border-radius:12px; padding:.75rem 1rem; box-shadow:0 1px 4px rgba(0,0,0,.06); }}
+    .site-check label {{ font-size:.8rem; cursor:pointer; user-select:none; }}
+    .site-check input {{ cursor:pointer; }}
   </style>
 </head>
 <body>
@@ -99,17 +102,22 @@ def _build_html(items_json: str, sites_json: str, log_json: str, updated: str) -
     </div>
   </div>
 
-  <div class="filter-bar mb-4 d-flex flex-wrap gap-2 align-items-center">
+  <div class="filter-bar mb-3 d-flex flex-wrap gap-2 align-items-center">
     <div class="btn-group btn-group-sm" id="status-filters">
       <button class="btn btn-dark"              data-status="all">すべて</button>
       <button class="btn btn-outline-secondary" data-status="new">新着</button>
       <button class="btn btn-outline-secondary" data-status="restock">リストック</button>
       <button class="btn btn-outline-secondary" data-status="soldout">SOLD OUT</button>
     </div>
-    <select class="form-select form-select-sm w-auto" id="site-filter">
-      <option value="">全サイト</option>
-    </select>
     <span class="ms-auto text-muted small d-none d-md-inline">15分ごとに自動更新</span>
+  </div>
+  <div class="site-panel mb-4">
+    <div class="d-flex align-items-center gap-2 mb-2">
+      <span class="small fw-semibold text-muted">サイト絞り込み</span>
+      <button class="btn btn-outline-secondary btn-sm py-0 px-2" id="site-all-btn" style="font-size:.75rem;">全選択</button>
+      <button class="btn btn-outline-secondary btn-sm py-0 px-2" id="site-none-btn" style="font-size:.75rem;">全解除</button>
+    </div>
+    <div class="d-flex flex-wrap gap-3" id="site-checkboxes"></div>
   </div>
 
   <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-3 mb-5" id="grid"></div>
@@ -146,7 +154,7 @@ function isRecentRestock(item) {{
 }}
 
 let currentStatus = "all";
-let currentSite = "";
+let selectedSites = new Set(JSON.parse(localStorage.getItem("selectedSites") || "null") || ALL_SITES);
 
 function matchStatus(item, status) {{
   if (status === "all")     return item.is_active;
@@ -235,7 +243,7 @@ function itemPriority(i) {{
 function render() {{
   const filtered = ALL_ITEMS
     .filter(i => matchStatus(i, currentStatus))
-    .filter(i => !currentSite || i.site_name === currentSite)
+    .filter(i => selectedSites.has(i.site_name))
     .sort((a, b) => {{
       const pd = itemPriority(a) - itemPriority(b);
       if (pd !== 0) return pd;
@@ -247,14 +255,33 @@ function render() {{
   updateStats(filtered);
 }}
 
-// Populate site dropdown
-const sel = document.getElementById("site-filter");
+// サイトチェックボックス
+function saveSites() {{
+  localStorage.setItem("selectedSites", JSON.stringify([...selectedSites]));
+}}
+const cbContainer = document.getElementById("site-checkboxes");
 ALL_SITES.forEach(s => {{
-  const o = document.createElement("option");
-  o.value = s; o.textContent = s;
-  sel.appendChild(o);
+  const id = "cb_" + s.replace(/\s+/g, "_");
+  const wrap = document.createElement("div");
+  wrap.className = "site-check d-flex align-items-center gap-1";
+  wrap.innerHTML = `<input type="checkbox" id="${{id}}" value="${{s}}"${{selectedSites.has(s) ? " checked" : ""}}>
+    <label for="${{id}}">${{s}}</label>`;
+  wrap.querySelector("input").addEventListener("change", e => {{
+    if (e.target.checked) selectedSites.add(s); else selectedSites.delete(s);
+    saveSites(); render();
+  }});
+  cbContainer.appendChild(wrap);
 }});
-sel.addEventListener("change", e => {{ currentSite = e.target.value; render(); }});
+document.getElementById("site-all-btn").addEventListener("click", () => {{
+  selectedSites = new Set(ALL_SITES);
+  cbContainer.querySelectorAll("input").forEach(cb => cb.checked = true);
+  saveSites(); render();
+}});
+document.getElementById("site-none-btn").addEventListener("click", () => {{
+  selectedSites = new Set();
+  cbContainer.querySelectorAll("input").forEach(cb => cb.checked = false);
+  saveSites(); render();
+}});
 
 // Status buttons
 document.getElementById("status-filters").addEventListener("click", e => {{
