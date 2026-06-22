@@ -190,18 +190,23 @@ function cardHTML(item) {{
         text-decoration:${{ok ? 'none' : 'line-through'}}">${{v}}</span>`;
     }}).join("");
   }})() : "";
-  const publishedTag = item.published_at ? (() => {{
-    const d = new Date(item.published_at);
+  const pubDate = item.published_at || item.first_seen;  // Shopify 以外は first_seen で代替
+  const publishedTag = pubDate ? (() => {{
+    const d = new Date(pubDate);
     const label = d.toLocaleString("ja-JP", {{timeZone:"Asia/Tokyo",month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"}});
-    return `<p class="text-muted mb-0" style="font-size:.68rem;">発売 ${{label}}</p>`;
+    const prefix = item.published_at ? "発売" : "初回確認";
+    return `<p class="text-muted mb-0" style="font-size:.68rem;">${{prefix}} ${{label}}</p>`;
   }})() : "";
   const soldoutTag = (() => {{
-    if (!soldout || !item.soldout_at || !item.published_at) return "";
-    const diffMs = new Date(item.soldout_at) - new Date(item.published_at);
+    if (!soldout || !item.soldout_at) return "";
+    const baseDate = item.published_at || item.first_seen;
+    if (!baseDate) return "";
+    const diffMs = new Date(item.soldout_at) - new Date(baseDate);
     if (diffMs <= 0) return "";
     const h = Math.floor(diffMs / 3600000);
     const m = Math.floor((diffMs % 3600000) / 60000);
-    const label = h > 0 ? `${{h}}時間${{m}}分で完売` : `${{m}}分で完売`;
+    const d = Math.floor(h / 24);
+    const label = d > 0 ? `${{d}}日${{h % 24}}時間で完売` : h > 0 ? `${{h}}時間${{m}}分で完売` : `${{m}}分で完売`;
     return `<p class="text-danger mb-0" style="font-size:.68rem;font-weight:600;">⏱ ${{label}}</p>`;
   }})();
   const ts = (item.last_seen || "").slice(0,16).replace("T"," ");
