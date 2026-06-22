@@ -75,6 +75,13 @@ sites:
     interval_minutes: 10
     enabled: true
 
+  # ── ZENTEX TOKYO ──────────────────────────────────────────────
+  - name: "ZENTEX TOKYO"
+    type: shopify
+    url: "https://zentex-tokyo.com"
+    interval_minutes: 10
+    enabled: true
+
   # ── FRIDGE SETAGAYA ───────────────────────────────────────────
   - name: "FRIDGE"
     type: generic
