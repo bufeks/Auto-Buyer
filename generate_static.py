@@ -103,17 +103,11 @@ def _build_html(items_json: str, sites_json: str, log_json: str, updated: str) -
         <div class="text-muted small">SOLD OUT</div>
       </div>
     </div>
-    <div class="col-6 col-md-3">
-      <div class="stat-card">
-        <div class="stat-num" id="stat-sites">—</div>
-        <div class="text-muted small">対象サイト数</div>
-      </div>
-    </div>
   </div>
 
   <details class="site-panel mb-4">
     <summary class="d-flex align-items-center gap-2" style="cursor:pointer;list-style:none;">
-      <span class="small fw-semibold text-muted">▶ サイト絞り込み</span>
+      <span class="small fw-semibold text-muted">▶ サイト絞り込み（<span id="stat-sites">—</span>サイト）</span>
       <button class="btn btn-outline-secondary btn-sm py-0 px-2" id="site-all-btn" style="font-size:.75rem;" onclick="event.preventDefault()">全選択</button>
       <button class="btn btn-outline-secondary btn-sm py-0 px-2" id="site-none-btn" style="font-size:.75rem;" onclick="event.preventDefault()">全解除</button>
     </summary>
