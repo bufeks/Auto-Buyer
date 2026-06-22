@@ -61,32 +61,44 @@ def _build_html(items_json: str, sites_json: str, log_json: str, updated: str) -
     .site-panel {{ background:#fff; border-radius:12px; padding:.75rem 1rem; box-shadow:0 1px 4px rgba(0,0,0,.06); }}
     .site-check label {{ font-size:.8rem; cursor:pointer; user-select:none; }}
     .site-check input {{ cursor:pointer; }}
+    .stat-card {{ cursor:pointer; transition:transform .15s,box-shadow .15s; }}
+    .stat-card:hover {{ transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.1); }}
+    .stat-card.active {{ outline:2px solid currentColor; outline-offset:2px; }}
   </style>
 </head>
 <body>
 <nav class="navbar navbar-dark bg-dark">
   <div class="container-fluid px-4">
     <span class="navbar-brand">SUPPLY TRACKER</span>
-    <span class="text-secondary small" id="count-label"></span>
+    <span class="text-secondary small d-flex flex-column align-items-end gap-0">
+      <span id="count-label"></span>
+      <span style="font-size:.7rem;opacity:.7;">最終取得 {updated}</span>
+    </span>
   </div>
 </nav>
 <div class="container-fluid px-4 py-4">
 
-  <div class="row g-3 mb-4">
+  <div class="row g-3 mb-4" id="stat-cards">
     <div class="col-6 col-md-3">
-      <div class="stat-card">
+      <div class="stat-card active" data-status="all">
+        <div class="stat-num" id="stat-all">—</div>
+        <div class="text-muted small">すべて</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card" data-status="new">
         <div class="stat-num text-success" id="stat-new">—</div>
         <div class="text-muted small">新着</div>
       </div>
     </div>
     <div class="col-6 col-md-3">
-      <div class="stat-card">
+      <div class="stat-card" data-status="restock">
         <div class="stat-num text-warning" id="stat-restock">—</div>
         <div class="text-muted small">リストック</div>
       </div>
     </div>
     <div class="col-6 col-md-3">
-      <div class="stat-card">
+      <div class="stat-card" data-status="soldout">
         <div class="stat-num text-secondary" id="stat-soldout">—</div>
         <div class="text-muted small">SOLD OUT</div>
       </div>
@@ -97,31 +109,16 @@ def _build_html(items_json: str, sites_json: str, log_json: str, updated: str) -
         <div class="text-muted small">対象サイト数</div>
       </div>
     </div>
-    <div class="col-6 col-md-3">
-      <div class="stat-card">
-        <div class="stat-num" style="font-size:1rem; padding-top:.4rem;">{updated}</div>
-        <div class="text-muted small">最終取得</div>
-      </div>
-    </div>
   </div>
 
-  <div class="filter-bar mb-3 d-flex flex-wrap gap-2 align-items-center">
-    <div class="btn-group btn-group-sm" id="status-filters">
-      <button class="btn btn-dark"              data-status="all">すべて</button>
-      <button class="btn btn-outline-secondary" data-status="new">新着</button>
-      <button class="btn btn-outline-secondary" data-status="restock">リストック</button>
-      <button class="btn btn-outline-secondary" data-status="soldout">SOLD OUT</button>
-    </div>
-    <span class="ms-auto text-muted small d-none d-md-inline">15分ごとに自動更新</span>
-  </div>
-  <div class="site-panel mb-4">
-    <div class="d-flex align-items-center gap-2 mb-2">
-      <span class="small fw-semibold text-muted">サイト絞り込み</span>
-      <button class="btn btn-outline-secondary btn-sm py-0 px-2" id="site-all-btn" style="font-size:.75rem;">全選択</button>
-      <button class="btn btn-outline-secondary btn-sm py-0 px-2" id="site-none-btn" style="font-size:.75rem;">全解除</button>
-    </div>
-    <div class="d-flex flex-wrap gap-3" id="site-checkboxes"></div>
-  </div>
+  <details class="site-panel mb-4">
+    <summary class="d-flex align-items-center gap-2" style="cursor:pointer;list-style:none;">
+      <span class="small fw-semibold text-muted">▶ サイト絞り込み</span>
+      <button class="btn btn-outline-secondary btn-sm py-0 px-2" id="site-all-btn" style="font-size:.75rem;" onclick="event.preventDefault()">全選択</button>
+      <button class="btn btn-outline-secondary btn-sm py-0 px-2" id="site-none-btn" style="font-size:.75rem;" onclick="event.preventDefault()">全解除</button>
+    </summary>
+    <div class="d-flex flex-wrap gap-3 mt-2" id="site-checkboxes"></div>
+  </details>
 
   <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-3 mb-5" id="grid"></div>
 
@@ -258,6 +255,7 @@ function cardHTML(item) {{
 
 function updateStats(filtered) {{
   const active = ALL_ITEMS.filter(i => i.is_active);
+  document.getElementById("stat-all").textContent     = active.length;
   document.getElementById("stat-new").textContent     = active.filter(i => !i.is_restock && i.in_stock && isRecentNew(i)).length;
   document.getElementById("stat-restock").textContent = active.filter(i => i.is_restock && isRecentRestock(i)).length;
   document.getElementById("stat-soldout").textContent = active.filter(i => !i.in_stock).length;
@@ -322,16 +320,13 @@ document.getElementById("site-none-btn").addEventListener("click", () => {{
   saveSites(); render();
 }});
 
-// Status buttons
-document.getElementById("status-filters").addEventListener("click", e => {{
-  const btn = e.target.closest("button[data-status]");
-  if (!btn) return;
-  currentStatus = btn.dataset.status;
-  document.querySelectorAll("#status-filters button").forEach(b => {{
-    b.className = "btn btn-outline-secondary";
-  }});
-  const activeClass = {{all:"btn-dark",new:"btn-success",restock:"btn-warning",soldout:"btn-secondary"}}[currentStatus] || "btn-dark";
-  btn.className = "btn " + activeClass;
+// Stat cards as status filters
+document.getElementById("stat-cards").addEventListener("click", e => {{
+  const card = e.target.closest(".stat-card[data-status]");
+  if (!card) return;
+  currentStatus = card.dataset.status;
+  document.querySelectorAll("#stat-cards .stat-card[data-status]").forEach(c => c.classList.remove("active"));
+  card.classList.add("active");
   render();
 }});
 
