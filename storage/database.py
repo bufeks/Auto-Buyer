@@ -56,6 +56,10 @@ def init_db() -> None:
             conn.execute("ALTER TABLE items ADD COLUMN published_at TEXT")
         if "soldout_at" not in cols:
             conn.execute("ALTER TABLE items ADD COLUMN soldout_at TEXT")
+        if "restock_count" not in cols:
+            conn.execute("ALTER TABLE items ADD COLUMN restock_count INTEGER NOT NULL DEFAULT 0")
+            # 既存の is_restock=1 アイテムは最低1回リストックされている
+            conn.execute("UPDATE items SET restock_count = 1 WHERE is_restock = 1")
         # 既存の SOLD OUT アイテムで soldout_at 未記録のものに first_seen を設定
         conn.execute("""
             UPDATE items SET soldout_at = first_seen
@@ -121,7 +125,8 @@ def upsert_items(site_name: str, scraped: List[Item]) -> dict:
                         restock_at = CASE WHEN ? THEN ? ELSE restock_at END,
                         soldout_at = CASE WHEN ? THEN ? ELSE soldout_at END,
                         variants_available = ?, variants_all = ?,
-                        published_at = COALESCE(published_at, ?)
+                        published_at = COALESCE(published_at, ?),
+                        restock_count = restock_count + CASE WHEN ? THEN 1 ELSE 0 END
                     WHERE item_id = ?
                     """,
                     (
@@ -132,6 +137,7 @@ def upsert_items(site_name: str, scraped: List[Item]) -> dict:
                         1 if went_soldout else 0, now if went_soldout else None,
                         item.variants_available, item.variants_all,
                         item.published_at,
+                        1 if is_restock else 0,
                         item.item_id,
                     ),
                 )

@@ -47,6 +47,9 @@ def _build_html(items_json: str, sites_json: str, log_json: str, updated: str) -
     .badge-restock {{ background:#f97316; }}
     .badge-soldout {{ background:#6b7280; }}
     .badge-instock {{ background:#3b82f6; }}
+    .badge-hot {{ background:#ef4444; }}
+    .badge-fast {{ background:#a855f7; }}
+    .badge-quick {{ background:#06b6d4; }}
     .price {{ color:#dc2626; font-weight:700; font-size:.95rem; }}
     .price-soldout {{ color:#9ca3af; font-weight:700; font-size:.95rem; text-decoration:line-through; }}
     .site-tag {{ font-size:.7rem; background:#374151; }}
@@ -153,6 +156,16 @@ function isRecentRestock(item) {{
     : false;
 }}
 
+// 発売〜完売までの時間（時間単位）。計算できない場合は Infinity
+function sellSpeedHours(item) {{
+  if (!item.soldout_at) return Infinity;
+  const baseDate = item.published_at || item.first_seen;
+  if (!baseDate) return Infinity;
+  const diffMs = new Date(item.soldout_at) - new Date(baseDate);
+  if (diffMs <= 0) return Infinity;
+  return diffMs / 3600000;
+}}
+
 let currentStatus = "all";
 let selectedSites = new Set(JSON.parse(localStorage.getItem("selectedSites") || "null") || ALL_SITES);
 
@@ -209,6 +222,18 @@ function cardHTML(item) {{
     const label = d > 0 ? `${{d}}日${{h % 24}}時間で完売` : h > 0 ? `${{h}}時間${{m}}分で完売` : `${{m}}分で完売`;
     return `<p class="text-danger mb-0" style="font-size:.68rem;font-weight:600;">⏱ ${{label}}</p>`;
   }})();
+  // 人気度バッジ（SOLD OUT 時のみ）
+  const popularityBadge = (() => {{
+    if (!soldout) return "";
+    const h = sellSpeedHours(item);
+    if (h <= 1)   return `<span class="badge badge-hot">🔥 即完売</span>`;
+    if (h <= 24)  return `<span class="badge badge-fast">⚡ 当日完売</span>`;
+    if (h <= 168) return `<span class="badge badge-quick">💨 数日完売</span>`;
+    return "";
+  }})();
+  const restockBadge = (item.restock_count && item.restock_count > 0)
+    ? `<span class="badge" style="background:#8b5cf6;font-size:.65rem;">🔄 ${{item.restock_count}}回リストック</span>`
+    : "";
   const ts = (item.last_seen || "").slice(0,16).replace("T"," ");
   return `<div class="col">
   <a href="${{item.item_url}}" target="_blank" rel="noopener"
@@ -217,7 +242,9 @@ function cardHTML(item) {{
     <div class="card-body p-2">
       <div class="d-flex gap-1 mb-1 flex-wrap">
         <span class="badge ${{badgeCls}}">${{badgeTxt}}</span>
+        ${{popularityBadge}}
         <span class="badge site-tag">${{item.site_name}}</span>
+        ${{restockBadge}}
       </div>
       <p class="item-name mb-1">${{item.name}}</p>
       ${{priceTag}}
@@ -252,6 +279,13 @@ function render() {{
     .sort((a, b) => {{
       const pd = itemPriority(a) - itemPriority(b);
       if (pd !== 0) return pd;
+      // SOLD OUT タブ: 完売速度順（速いほど上）、次にリストック回数順
+      if (currentStatus === "soldout") {{
+        const sa = sellSpeedHours(a), sb = sellSpeedHours(b);
+        if (sa !== sb) return sa - sb;
+        if ((b.restock_count || 0) !== (a.restock_count || 0))
+          return (b.restock_count || 0) - (a.restock_count || 0);
+      }}
       return (b.first_seen || "").localeCompare(a.first_seen || "");
     }});
   document.getElementById("grid").innerHTML = filtered.length
