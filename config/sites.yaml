@@ -137,6 +137,20 @@ sites:
     interval_minutes: 10
     enabled: true
 
+  # ── PPCE ──────────────────────────────────────────────────────
+  - name: "PPCE"
+    type: playwright        # BASE製サイト（JSレンダリング）
+    url: "https://official.ppce.store/"
+    interval_minutes: 10
+    enabled: true
+    selectors:
+      container: "li[class*='itemListLI']"
+      name: "p[class*='itemTitleText']"
+      price: "p[class*='_price_']"
+      image: "img[class*='_image_']"
+      link: "a[class*='_anchor_']"
+      sold_out: "p[class*='soldOut']"
+
   # ── Shopify サイト追加例 ───────────────────────────────────────
   # - name: "YOUR STORE"
   #   type: shopify
