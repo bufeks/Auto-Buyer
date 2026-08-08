@@ -130,6 +130,13 @@ sites:
     interval_minutes: 10
     enabled: true
 
+  # ── PRODUCT TWELVE ────────────────────────────────────────────
+  - name: "PRODUCT TWELVE"
+    type: shopify
+    url: "https://producttwelve.shop"
+    interval_minutes: 10
+    enabled: true
+
   # ── Shopify サイト追加例 ───────────────────────────────────────
   # - name: "YOUR STORE"
   #   type: shopify
