@@ -137,6 +137,20 @@ sites:
     interval_minutes: 10
     enabled: true
 
+  # ── MORNING SNACK ─────────────────────────────────────────────
+  - name: "MORNING SNACK"
+    type: playwright        # STORES製サイト（JSレンダリング）
+    url: "https://morningsnack.theshop.jp/"
+    interval_minutes: 10
+    enabled: true
+    selectors:
+      container: "li.item-box"
+      name: ".item-title"
+      price: ".item-price"
+      image: "img.item-thumb-img"
+      link: "a"
+      sold_out: ".soldout"
+
   # ── PPCE ──────────────────────────────────────────────────────
   - name: "PPCE"
     type: playwright        # BASE製サイト（JSレンダリング）
