@@ -158,6 +158,13 @@ sites:
     interval_minutes: 10
     enabled: true
 
+  # ── MERINO MERINO ─────────────────────────────────────────────
+  - name: "merino merino"
+    type: shopify
+    url: "https://merino-merino.com"
+    interval_minutes: 10
+    enabled: true
+
   # ── MORNING SNACK ─────────────────────────────────────────────
   - name: "MORNING SNACK"
     type: playwright        # STORES製サイト（JSレンダリング）
