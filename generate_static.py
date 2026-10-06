@@ -227,23 +227,30 @@ function cardHTML(item) {{
     : "";
   const ts = (item.last_seen || "").slice(0,16).replace("T"," ");
   return `<div class="col">
-  <a href="${{item.item_url}}" target="_blank" rel="noopener"
-     class="card h-100${{soldout ? ' card-soldout' : ''}}">
-    ${{img}}
-    <div class="card-body p-2">
-      <div class="d-flex gap-1 mb-1 flex-wrap">
-        <span class="badge ${{badgeCls}}">${{badgeTxt}}</span>
-        ${{popularityBadge}}
-        <span class="badge site-tag">${{item.site_name}}</span>
-        ${{restockBadge}}
+  <div class="card h-100${{soldout ? ' card-soldout' : ''}}">
+    <a href="${{item.item_url}}" target="_blank" rel="noopener" class="text-decoration-none text-reset">
+      ${{img}}
+      <div class="card-body p-2">
+        <div class="d-flex gap-1 mb-1 flex-wrap">
+          <span class="badge ${{badgeCls}}">${{badgeTxt}}</span>
+          ${{popularityBadge}}
+          <span class="badge site-tag">${{item.site_name}}</span>
+          ${{restockBadge}}
+        </div>
+        <p class="item-name mb-1">${{item.name}}</p>
+        ${{priceTag}}
+        ${{variantTag ? `<div class="mt-1">${{variantTag}}</div>` : ""}}
+        ${{publishedTag}}
+        ${{soldoutTag}}
       </div>
-      <p class="item-name mb-1">${{item.name}}</p>
-      ${{priceTag}}
-      ${{variantTag ? `<div class="mt-1">${{variantTag}}</div>` : ""}}
-      ${{publishedTag}}
-      ${{soldoutTag}}
+    </a>
+    <div class="card-footer p-1 border-0 bg-transparent text-end">
+      <a href="https://www.google.com/search?q=${{encodeURIComponent(item.name + ' 購入')}}"
+         target="_blank" rel="noopener"
+         class="btn btn-outline-secondary btn-sm py-0 px-2"
+         style="font-size:.65rem;">🔍 他で探す</a>
     </div>
-  </a>
+  </div>
 </div>`;
 }}
 
