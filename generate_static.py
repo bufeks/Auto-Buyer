@@ -245,7 +245,7 @@ function cardHTML(item) {{
       </div>
     </a>
     <div class="card-footer p-1 border-0 bg-transparent text-end">
-      <a href="https://www.google.com/search?q=${{encodeURIComponent(item.name + ' 購入')}}"
+      <a href="https://www.google.com/search?q=${{encodeURIComponent(item.name)}}"
          target="_blank" rel="noopener"
          class="btn btn-outline-secondary btn-sm py-0 px-2"
          style="font-size:.65rem;">🔍 他で探す</a>
