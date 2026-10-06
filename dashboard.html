@@ -41,7 +41,7 @@
     <span class="navbar-brand">SUPPLY TRACKER</span>
     <span class="text-secondary small d-flex flex-column align-items-end gap-0">
       <span id="count-label"></span>
-      <span style="font-size:.7rem;opacity:.7;">最終取得 2026-10-06 13:16 JST</span>
+      <span style="font-size:.7rem;opacity:.7;">最終取得 2026-10-06 13:25 JST</span>
     </span>
   </div>
 </nav>
@@ -214,7 +214,7 @@ function cardHTML(item) {
       </div>
     </a>
     <div class="card-footer p-1 border-0 bg-transparent text-end">
-      <a href="https://www.google.com/search?q=${encodeURIComponent(item.name.replace(/[【】「」『』〔〕［］〈〉《》【】""''()（）]/g, ' ').replace(/\s+/g, ' ').trim())}"
+      <a href="https://www.google.com/search?q=${encodeURIComponent(item.name.replace(/[【】「」『』〔〕［］〈〉《》＜＞<>""''()（）]/g, ' ').replace(/-(2,)/g, ' ').replace(/\s+/g, ' ').trim())}"
          target="_blank" rel="noopener"
          class="btn btn-outline-secondary btn-sm py-0 px-2"
          style="font-size:.65rem;">🔍 他で探す</a>
@@ -317,7 +317,7 @@ if (SCRAPE_LOG.length) {
 render();
 
 // 自動リロード: 5分ごとにページの更新タイムスタンプを確認し、新しければリロード
-const CURRENT_UPDATED = "2026-10-06 13:16 JST";
+const CURRENT_UPDATED = "2026-10-06 13:25 JST";
 setInterval(async () => {
   try {
     const res = await fetch(location.href, { cache: "no-store" });
