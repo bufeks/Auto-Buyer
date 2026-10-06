@@ -48,7 +48,10 @@ def scrape_shopify(site_config: Dict[str, Any]) -> List[Item]:
         vendor = product.get("vendor", "")
         handle = product.get("handle", "")
 
-        name = f"{vendor} {title}".strip() if vendor else title
+        if vendor and not title.lower().startswith(vendor.lower()):
+            name = f"{vendor} {title}".strip()
+        else:
+            name = title
 
         price_variants = available_variants if in_stock else variants
         prices = [float(v["price"]) for v in price_variants if v.get("price")]
