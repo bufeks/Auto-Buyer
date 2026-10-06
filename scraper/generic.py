@@ -67,8 +67,12 @@ def scrape_generic(site_config: Dict[str, Any]) -> List[Item]:
         soldout_el = container.select_one(selectors.get("sold_out", "")) if selectors.get("sold_out") else None
         # コンテナ自身のクラスで SOLD OUT を判定する場合
         sold_out_class = selectors.get("sold_out_class")
+        # 価格テキストで SOLD OUT を判定する場合
+        sold_out_price_text = selectors.get("sold_out_price_text")
         if sold_out_class:
             in_stock = sold_out_class not in container.get("class", [])
+        elif sold_out_price_text and price:
+            in_stock = sold_out_price_text.lower() not in price.lower()
         else:
             in_stock = soldout_el is None
 
