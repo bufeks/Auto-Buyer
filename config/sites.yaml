@@ -123,6 +123,20 @@ sites:
       link: "a[href*='/items/']"
       sold_out: "p.endOfSale"
 
+  # ── WAX KANAZAWA ──────────────────────────────────────────────
+  - name: "WAX"
+    type: generic
+    url: "https://shop.waxkanazawa.com/?mode=cate&cbid=2917030&csid=0&sort=n"
+    interval_minutes: 10
+    enabled: true
+    selectors:
+      container: "div.product_card"
+      name: "div.inr h3"
+      price: "div.inr p"
+      image: "div.thum img"
+      link: "a[href*='?pid=']"
+      sold_out_price_text: "SOLD OUT"
+
   # ── noook ──────────────────────────────────────────────────────
   - name: "noook"
     type: shopify
