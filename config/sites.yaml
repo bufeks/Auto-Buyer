@@ -151,6 +151,13 @@ sites:
     interval_minutes: 10
     enabled: true
 
+  # ── SAN-MARU-SAN ──────────────────────────────────────────────
+  - name: "SAN-MARU-SAN"
+    type: shopify
+    url: "https://san-maru-san.com"
+    interval_minutes: 10
+    enabled: true
+
   # ── MORNING SNACK ─────────────────────────────────────────────
   - name: "MORNING SNACK"
     type: playwright        # STORES製サイト（JSレンダリング）
