@@ -183,7 +183,7 @@ function cardHTML(item) {{
          onerror="this.src='https://placehold.co/300x220/eeeeee/999999?text=No+Image'">`
     : `<div class="card-img-top d-flex align-items-center justify-content-center bg-light text-muted small">No Image</div>`;
   const priceTag = item.price
-    ? `<p class="${{soldout ? 'price-soldout' : 'price'}} mb-0">${{item.price}}</p>` : "";
+    ? `<p class="${{soldout ? 'price-soldout' : 'price'}} mb-0">${{item.price.replace(/\s*\(\$[\d,.]+\)/g, '')}}</p>` : "";
   const allV   = item.variants_all       ? JSON.parse(item.variants_all)       : [];
   const availV = item.variants_available ? JSON.parse(item.variants_available) : [];
   const variantTag = allV.length ? (() => {{
