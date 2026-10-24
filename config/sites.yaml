@@ -167,15 +167,15 @@ sites:
 
   # ── MORNING SNACK ─────────────────────────────────────────────
   - name: "MORNING SNACK"
-    type: playwright        # STORES製サイト（JSレンダリング）
+    type: generic           # STORES製サイト（静的HTML取得可）
     url: "https://morningsnack.theshop.jp/"
     interval_minutes: 10
     enabled: true
     selectors:
-      container: "li.item-box"
+      container: "div.item-box"
       name: ".item-title"
       price: ".item-price"
-      image: "img.item-thumb-img"
+      image: "img"
       link: "a"
       sold_out: ".soldout"
 
@@ -186,10 +186,10 @@ sites:
     interval_minutes: 10
     enabled: true
     selectors:
-      container: "li.item-box"
+      container: "div.item-box"
       name: ".item-title"
       price: ".item-price"
-      image: "img.item-thumb-img"
+      image: "img"
       link: "a"
       sold_out: ".soldout"
 
