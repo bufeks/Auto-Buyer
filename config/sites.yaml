@@ -165,6 +165,13 @@ sites:
     interval_minutes: 10
     enabled: true
 
+  # ── CUXTON HOUSE ──────────────────────────────────────────────
+  - name: "CUXTON HOUSE"
+    type: shopify
+    url: "https://cuxtonhouse.com"
+    interval_minutes: 10
+    enabled: true
+
   # ── MORNING SNACK ─────────────────────────────────────────────
   - name: "MORNING SNACK"
     type: generic           # STORES製サイト（静的HTML取得可）
