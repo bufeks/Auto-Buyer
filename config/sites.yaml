@@ -179,6 +179,20 @@ sites:
       link: "a"
       sold_out: ".soldout"
 
+  # ── BROWN BAG ─────────────────────────────────────────────────
+  - name: "BROWN BAG"
+    type: playwright        # STORES製サイト（JSレンダリング）
+    url: "https://brownbag.theshop.jp/"
+    interval_minutes: 10
+    enabled: true
+    selectors:
+      container: "li.item-box"
+      name: ".item-title"
+      price: ".item-price"
+      image: "img.item-thumb-img"
+      link: "a"
+      sold_out: ".soldout"
+
   # ── ST. VALLEY HOUSE ──────────────────────────────────────────
   - name: "ST. VALLEY HOUSE"
     type: playwright        # BASE製サイト（JSレンダリング）
