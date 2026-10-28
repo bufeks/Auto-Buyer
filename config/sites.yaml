@@ -172,6 +172,13 @@ sites:
     interval_minutes: 10
     enabled: true
 
+  # ── EG PLACE ──────────────────────────────────────────────────
+  - name: "EG PLACE"
+    type: shopify
+    url: "https://eg-place.com"
+    interval_minutes: 10
+    enabled: true
+
   # ── MORNING SNACK ─────────────────────────────────────────────
   - name: "MORNING SNACK"
     type: generic           # STORES製サイト（静的HTML取得可）
